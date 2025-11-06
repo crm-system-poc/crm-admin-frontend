@@ -35,10 +35,16 @@ export default function LoginPage() {
   const onSubmit = async (data: any) => {
     toast.loading("Logging in...");
     try {
-      const response = await axios.post("http://localhost:8080/api/admin/login", {
-        email: data.email,
-        password: data.password,
-      });
+      const response = await axios.post(
+        "http://localhost:8080/api/admin/login", 
+        {
+          email: data.email,
+          password: data.password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       toast.dismiss();
       toast.success("Login Successful ✅");
