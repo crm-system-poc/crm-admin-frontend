@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, Search, Home, Users, History } from "lucide-react";
+import { Menu, Bell, Search, Home, Users, History, IndianRupee, ListOrdered, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,8 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast } from "sonner";
 
 export function AppBar() {
   const pathname = usePathname();
@@ -25,14 +27,30 @@ export function AppBar() {
   const navItems = [
     { label: "Home", href: "/", icon: Home },
     { label: "Leads", href: "/leads", icon: Users },
-    { label: "Quotation", href: "/quotation", icon: History },
-    { label: "Purchase Order", href: "/purchase-history", icon: History },
-    { label: "Reports", href: "/reports", icon: History },
+    { label: "Quotation", href: "/quotation", icon: IndianRupee },
+    { label: "Purchase Order", href: "/purchase-history", icon: ListOrdered },
+    { label: "Reports", href: "/reports", icon: File },
   ];
 
+  const handleLogout = async () => {
+    try {
+      toast.loading("Logging out...");
+      await axios.post(
+        "http://localhost:8080/api/admin/logout",
+        {},
+        { withCredentials: true }
+      );
+      toast.dismiss();
+      toast.success("Logged out successfully.");
+      router.push("/login");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Logout failed");
+    }
+  };
+
   return (
-    <header className="w-full border-b bg-background/70 backdrop-blur-xl shadow-sm">
-      <div className="flex items-center h-16 px-4 gap-4">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/70 backdrop-blur-xl shadow-sm">      <div className="flex items-center h-16 px-4 gap-4">
         {/* Mobile Menu */}
         <Sheet>
           <SheetTrigger className="md:hidden">
@@ -123,7 +141,10 @@ export function AppBar() {
               </DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={handleLogout}
+              >
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>

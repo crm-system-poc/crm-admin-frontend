@@ -28,10 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased` }
       >
         <AppBarWrapper />
-        {children}
+       <div className="mt-16"> {children}</div>
         <Toaster richColors position="top-center" /> {/* ← THIS IS REQUIRED */}
       </body>
     </html>
