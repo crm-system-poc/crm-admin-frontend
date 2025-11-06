@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Bell, Search, Home, Users, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export function AppBar() {
   const pathname = usePathname();
@@ -29,6 +29,20 @@ export function AppBar() {
     { label: "Purchase Order", href: "/purchase-history", icon: History },
     { label: "Reports", href: "/reports", icon: History },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        "http://localhost:8080/api/admin/logout",
+        {},
+        { withCredentials: true }
+      );
+      router.push("/login"); 
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Logout failed. Please try again.");
+    }
+  };
 
   return (
     <header className="w-full border-b bg-background/70 backdrop-blur-xl shadow-sm">
@@ -123,7 +137,7 @@ export function AppBar() {
               </DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
