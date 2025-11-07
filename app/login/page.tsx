@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {useRouter} from "next/navigation";
+import {useForm} from "react-hook-form";
+import {z} from "zod";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
 import {
   Form,
   FormField,
@@ -15,8 +15,8 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { toast } from "sonner";
+import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card";
+import {toast} from "sonner";
 import axios from "axios";
 import { api } from "@/lib/api";
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: {email: "", password: ""},
   });
 
   const onSubmit = async (data: any) => {
@@ -48,14 +48,14 @@ export default function LoginPage() {
       );
 
       toast.dismiss();
-      toast.success("Login Successful ✅");
+      toast.success("Login Successful");
 
       // Optionally, handle storing token or user info returned by backend here
 
       router.push("/");
-    } catch (error: any) {
+    } catch(error: any) {
       toast.dismiss();
-      if (error.response && error.response.data && error.response.data.message) {
+      if(error.response && error.response.data && error.response.data.message) {
         toast.error(error.response.data.message);
       } else {
         toast.error("Invalid email or password");
@@ -64,20 +64,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-      {/* Left Image */}
-      <div className="hidden md:block relative">
-        <Image
-          src="/crm.jpg"
-          alt="Login background"
-          fill
-          className="object-cover"
-        />
-      </div>
+<div className="fixed inset-0 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
+  {/* Left Image */}
+  <div className="hidden md:block relative">
+    <Image
+      src="/crm.jpg"
+      alt="Login background"
+      fill
+      className="object-cover"
+    />
+  </div>
 
-      {/* Right Card */}
-      <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-md shadow-lg border bg-background/95 backdrop-blur-sm">
+  {/* Right Card */}
+  <div className="flex items-center justify-center p-6 h-full">
+    <Card className="w-full max-w-md shadow-lg border bg-background/95 backdrop-blur-sm">
+      {/* Card content remains the same */}
+  
+
           <CardHeader>
             <CardTitle className="text-2xl font-semibold text-center">
               Admin Login
@@ -138,8 +141,8 @@ export default function LoginPage() {
               </button>
             </p>
           </CardFooter>
-        </Card>
-      </div>
-    </div>
+        </Card >
+      </div >
+    </div >
   );
 }
