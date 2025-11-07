@@ -18,6 +18,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import axios from "axios";
+import { api } from "@/lib/api";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -35,8 +36,8 @@ export default function LoginPage() {
   const onSubmit = async (data: any) => {
     toast.loading("Logging in...");
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/admin/login", 
+      const response = await api.post(
+        "/api/admin/login", 
         {
           email: data.email,
           password: data.password,
