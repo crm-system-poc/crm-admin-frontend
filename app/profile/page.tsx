@@ -1,13 +1,12 @@
 "use client";
 
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {Card, CardContent, CardFooter} from "@/components/ui/card";
-import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/button";
-import {Label} from "@/components/ui/label";
-import {toast} from "sonner"; // ✅ Toast notifications
-
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const api = axios.create({
   baseURL: "http://localhost:8080/api",
@@ -15,7 +14,6 @@ const api = axios.create({
 });
 
 export default function AdminProfilePage() {
-
   const [profile, setProfile] = useState({
     name: "",
     phone: "",
@@ -29,12 +27,9 @@ export default function AdminProfilePage() {
   });
 
   const [passwordError, setPasswordError] = useState("");
-
-
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [fetchingProfile, setFetchingProfile] = useState(true);
-
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -51,7 +46,7 @@ export default function AdminProfilePage() {
           email: profileData.email || "",
           profileImage: profileData.profileImage || "",
         });
-      } catch(err) {
+      } catch (err) {
         console.error("Error fetching profile:", err);
         toast.error("Failed to load profile.");
       } finally {
@@ -61,7 +56,6 @@ export default function AdminProfilePage() {
 
     fetchProfile();
   }, []);
-
 
   const handleUpdateProfile = async () => {
     try {
@@ -75,7 +69,7 @@ export default function AdminProfilePage() {
       const response = await api.put("/admin/profile", payload);
       setProfile(response.data.data || response.data);
       toast.success("Profile updated successfully!");
-    } catch(err) {
+    } catch (err) {
       console.error("Error updating profile:", err);
       toast.error("Failed to update profile.");
     } finally {
@@ -83,22 +77,27 @@ export default function AdminProfilePage() {
     }
   };
 
-
   const handleChangePassword = async () => {
-
-    if(passwordData.newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters long.");
+   
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setPasswordError("Both current and new passwords are required.");
       return;
-    } else {
-      setPasswordError("");
     }
+
+  
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setPasswordError(""); 
 
     try {
       setPasswordLoading(true);
       await api.put("/admin/change-password", passwordData);
       toast.success("Password changed successfully!");
-      setPasswordData({currentPassword: "", newPassword: ""});
-    } catch(err: any) {
+      setPasswordData({ currentPassword: "", newPassword: "" });
+    } catch (err: any) {
       console.error("Error changing password:", err);
       toast.error(err.response?.data?.message || "Failed to change password.");
     } finally {
@@ -106,16 +105,14 @@ export default function AdminProfilePage() {
     }
   };
 
-
   const avatarUrl =
     profile.profileImage && profile.profileImage.startsWith("http")
       ? profile.profileImage
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        profile.name || "Admin"
-      )}&background=E11D48&color=fff&size=128`;
+          profile.name || "Admin"
+        )}&background=E11D48&color=fff&size=128`;
 
-  //loading screen
-  if(fetchingProfile) {
+  if (fetchingProfile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-100 via-white to-pink-50">
         <div className="w-16 h-16 border-4 border-pink-600 border-t-transparent rounded-full animate-spin mb-6"></div>
@@ -126,11 +123,9 @@ export default function AdminProfilePage() {
     );
   }
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center p-6">
       <Card className="flex flex-col md:flex-row w-full max-w-5xl shadow-2xl rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-lg transition-transform hover:-translate-y-2 duration-300">
-
         {/* Left Side */}
         <div
           className="w-full md:w-1/3 flex flex-col items-center justify-center p-12 space-y-8 rounded-l-2xl text-white"
@@ -149,10 +144,9 @@ export default function AdminProfilePage() {
           </div>
         </div>
 
-        {/* Right Side profile info*/}
+        {/* Right Side profile info */}
         <CardContent className="w-full md:w-2/3 p-10 space-y-12">
-
-
+          
           <section className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-700 border-b pb-3">
               Profile Information
@@ -163,7 +157,7 @@ export default function AdminProfilePage() {
                 <Input
                   value={profile.name}
                   onChange={(e) =>
-                    setProfile({...profile, name: e.target.value})
+                    setProfile({ ...profile, name: e.target.value })
                   }
                   placeholder="Enter your name"
                   className="mt-1"
@@ -174,7 +168,7 @@ export default function AdminProfilePage() {
                 <Input
                   value={profile.phone || ""}
                   onChange={(e) =>
-                    setProfile({...profile, phone: e.target.value})
+                    setProfile({ ...profile, phone: e.target.value })
                   }
                   placeholder="Enter phone number"
                   className="mt-1"
@@ -193,7 +187,7 @@ export default function AdminProfilePage() {
                 <Input
                   value={profile.profileImage}
                   onChange={(e) =>
-                    setProfile({...profile, profileImage: e.target.value})
+                    setProfile({ ...profile, profileImage: e.target.value })
                   }
                   placeholder="Enter image URL"
                   className="mt-1"
@@ -211,7 +205,7 @@ export default function AdminProfilePage() {
             </div>
           </section>
 
-          {/* Password Change Section */}
+          {/* Password */}
           <section className="space-y-6">
             <h3 className="text-xl font-semibold text-gray-700 border-b pb-3">
               Change Password
