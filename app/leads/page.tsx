@@ -338,7 +338,7 @@ export default function LeadsPage() {
                     }}
                     className="text-destructive"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete Lead
+                    Delete Lead
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
                 <AlertDialogContent>

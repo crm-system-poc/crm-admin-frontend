@@ -128,12 +128,12 @@ export default function AdminProfilePage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 flex items-center justify-center ">
       <Card className="flex flex-col md:flex-row w-full max-w-5xl shadow-2xl rounded-2xl border border-gray-200 bg-white/90 backdrop-blur-lg transition-transform hover:-translate-y-2 duration-300">
 
         {/* Left Side */}
         <div
-          className="w-full md:w-1/3 flex flex-col items-center justify-center p-12 space-y-8 rounded-l-2xl text-white"
+          className="w-full md:w-1/3 flex flex-col items-center justify-center space-y-8 rounded-l-2xl text-white"
           style={{
             background: "linear-gradient(to bottom, #DB2777, #BE185D, #9D174D)",
           }}

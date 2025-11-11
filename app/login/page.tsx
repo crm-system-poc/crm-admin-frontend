@@ -50,7 +50,10 @@ export default function LoginPage() {
       toast.dismiss();
       toast.success("Login Successful");
 
-      // Optionally, handle storing token or user info returned by backend here
+      // Store admin name in localStorage after login
+      if (response.data && response.data.data && response.data.data.admin && response.data.data.admin.name) {
+        localStorage.setItem("adminName", response.data.data.admin.name);
+      }
 
       router.push("/");
     } catch(error: any) {

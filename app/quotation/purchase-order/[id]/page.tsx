@@ -308,7 +308,7 @@ export default function QuotationDetail() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Notes"
                 readOnly
-                rows={2}
+                minRows={2}
                 className="resize-none"
               />
             </div>

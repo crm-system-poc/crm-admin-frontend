@@ -27,8 +27,8 @@ export function AppBar() {
   const navItems = [
     { label: "Home", href: "/", icon: Home },
     { label: "Leads", href: "/leads", icon: Users },
-    { label: "Quotation", href: "/quotation", icon: IndianRupee },
-    { label: "Purchase Order", href: "/purchase-history", icon: ListOrdered },
+    { label: "Quotations", href: "/quotation", icon: IndianRupee },
+    { label: "Purchase Orders", href: "/purchase-orders", icon: ListOrdered },
     { label: "Reports", href: "/reports", icon: File },
   ];
 
@@ -43,6 +43,10 @@ export function AppBar() {
       toast.dismiss();
       toast.success("Logged out successfully.");
       router.push("/login");
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+
     } catch (error) {
       toast.dismiss();
       toast.error("Logout failed");
@@ -106,7 +110,7 @@ export function AppBar() {
         </nav>
 
         {/* Search */}
-        <div className="hidden md:flex flex-1 max-w-md mx-auto">
+        <div className="hidden md:flex flex-1 max-w-sm ">
           <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search…" className="pl-10 rounded-full" />
@@ -129,7 +133,9 @@ export function AppBar() {
             <DropdownMenuTrigger>
               <Avatar className="cursor-pointer ring-2 ring-pink-500 ring-offset-2">
                 <AvatarFallback className="bg-pink-600 text-white">
-                  MG
+                  {typeof window !== "undefined"
+                    ? (localStorage.getItem("adminName")?.split(" ").map(n => n.charAt(0)).join("").slice(0, 2).toUpperCase() || "AD")
+                    : "AD"}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>

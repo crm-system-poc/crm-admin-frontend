@@ -16,6 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { MoreVertical, Trash2, Eye, FilePlus2 } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_OPTIONS = [
   "draft",
@@ -34,8 +44,11 @@ export default function QuotationList() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string | undefined>(undefined);
   const [customerName, setCustomerName] = useState<string>("");
-
   const [loading, setLoading] = useState(false);
+
+  // For delete dialog
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch with filters and pagination
   const fetchData = async () => {
@@ -62,7 +75,6 @@ export default function QuotationList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, status, customerName]);
 
-
   // Reset page if filter/search changes
   useEffect(() => {
     setPage(1);
@@ -70,12 +82,29 @@ export default function QuotationList() {
     // eslint-disable-next-line
   }, [status, customerName]);
 
+  // Delete Handler
+  const handleDelete = async (id: string) => {
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/api/quotations/${id}`);
+      toast.success("Quotation deleted.");
+      // Remove from list
+      setQuotations(qs => qs.filter(q => q.id !== id));
+      // Optionally you may want to refetch for accurate pagination
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to delete quotation.");
+    } finally {
+      setDeleteLoading(false);
+      setDeleteId(null);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
-        <Button onClick={() => router.push("/quotation/create")}>Create Quotation</Button>
+        {/* <Button onClick={() => router.push("/quotation/create")}>Create Quotation</Button> */}
       </div>
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
@@ -122,7 +151,7 @@ export default function QuotationList() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead>Quote #</TableHead>
+              <TableHead>Quotation</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Lead</TableHead>
               <TableHead>Status</TableHead>
@@ -147,8 +176,6 @@ export default function QuotationList() {
                   <TableCell>
                     {q.customerDetails?.customerName}
                     <div className="text-xs text-muted-foreground">{q.customerDetails?.contactPerson}</div>
-                    <div className="text-xs text-muted-foreground">{q.customerDetails?.email}</div>
-                    <div className="text-xs text-muted-foreground">{q.customerDetails?.phoneNumber}</div>
                   </TableCell>
                   <TableCell>
                     {q.leadId?.id ? (
@@ -186,9 +213,60 @@ export default function QuotationList() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/quotation/${q.id}`)}>
-                      View
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/quotation/${q.id}`)}
+                        >
+         
+                          View Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (q.id && q.leadId && q.leadId.id) {
+                              router.push(`quotation/purchase-order/${q.id}/${q.leadId.id}`);
+                            } else {
+                              toast.error("Quotation or Lead info missing.");
+                            }
+                          }}
+                        >
+                          Create Purchase Order
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog open={deleteId === q.id} onOpenChange={(open) => {if (!open) setDeleteId(null); }}>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem onClick={() => setDeleteId(q.id)}>
+                              Delete
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Quotation</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this quotation? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={deleteLoading} onClick={() => setDeleteId(null)}>
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                disabled={deleteLoading}
+                                className="bg-destructive hover:bg-destructive/90"
+                                onClick={() => handleDelete(q.id)}
+                              >
+                                {deleteLoading ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
