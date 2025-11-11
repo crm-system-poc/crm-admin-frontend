@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { AppBar } from "@/components/appbar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -26,6 +27,10 @@ import {
 } from "recharts"
 
 export default function Home() {
+  const [apiStats, setApiStats] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
   const stats = [
     { label: "Total Leads", value: 248, icon: Users, color: "text-pink-600" },
     { label: "Active Deals", value: 37, icon: TrendingUp, color: "text-blue-600" },
@@ -51,6 +56,38 @@ export default function Home() {
     { name: "Manish Patel", company: "SoftWeb", stage: "Negotiation" },
   ]
 
+  
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoading(true)
+      setError("")
+      try {
+        const res = await fetch("http://localhost:8080/api/leads/stats", {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          
+        })
+        
+        const json = await res.json()
+        if (json.success) {
+          setApiStats(json.data)
+        } else {
+          setError("Failed to load data")
+        }
+        
+      } catch (err: any) {
+        setError(err.message || "Something went wrong")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
   return (
     <>
       <div className="p-6 space-y-10">
@@ -60,6 +97,77 @@ export default function Home() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Your CRM insights at a glance</p>
         </div>
+
+         
+        <Card className="border border-pink-200/40 bg-pink-50/40 rounded-xl shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-pink-700">
+              <Users className="h-5 w-5 text-pink-600" />
+              Stats
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+            {error && <p className="text-sm text-red-500">Error: {error}</p>}
+
+            {apiStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+                <Card className="border border-pink-200/40">
+                  <CardHeader className="pb-1">
+                    <CardTitle className="text-sm text-muted-foreground">Total Leads</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold text-pink-700">
+                    {apiStats.totalLeads ?? 0}
+                  </CardContent>
+                </Card>
+
+               
+                <Card className="border border-pink-200/40">
+                  <CardHeader className="pb-1">
+                    <CardTitle className="text-sm text-muted-foreground">Total Value</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold text-pink-700">
+                    ₹ {apiStats.totalValue ?? 0}
+                  </CardContent>
+                </Card>
+
+                
+                <Card className="border border-pink-200/40">
+                  <CardHeader className="pb-1">
+                    <CardTitle className="text-sm text-muted-foreground">Statuses</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-1">
+                    {apiStats.byStatus?.length
+                      ? apiStats.byStatus.map((s: any, i: number) => (
+                          <div key={i}>
+                            {s._id}: {s.count} (₹ {s.totalValue})
+                          </div>
+                        ))
+                      : "No data"}
+                  </CardContent>
+                </Card>
+
+              
+                <Card className="border border-pink-200/40">
+                  <CardHeader className="pb-1">
+                    <CardTitle className="text-sm text-muted-foreground">Priorities</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-1">
+                    {apiStats.byPriority?.length
+                      ? apiStats.byPriority.map((p: any, i: number) => (
+                          <div key={i}>
+                            {p._id}: {p.count}
+                          </div>
+                        ))
+                      : "No data"}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -80,6 +188,7 @@ export default function Home() {
           })}
         </div>
 
+      
         <Separator />
 
         {/* Charts */}

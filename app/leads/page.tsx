@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Lead, Paginated } from "@/components/leads/types";
-import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import {useEffect, useMemo, useState} from "react";
+import {useRouter} from "next/navigation";
+import {api} from "@/lib/api";
+import {Lead, Paginated} from "@/components/leads/types";
+import {toast} from "sonner";
+import {ChevronLeft, ChevronRight, MoreVertical, Trash2} from "lucide-react";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -13,8 +13,8 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -22,9 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {Checkbox} from "@/components/ui/checkbox";
+import {Badge} from "@/components/ui/badge";
+import {Separator} from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -87,7 +87,7 @@ export default function LeadsPage() {
   // selection state (bulk actions)
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
-  // --- NEW STATE for Alert Dialogs (single & bulk delete) ---
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteBulkDialogOpen, setDeleteBulkDialogOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
@@ -99,7 +99,7 @@ export default function LeadsPage() {
     try {
       setLoading(true);
       const resp = await api.get(`/api/leads/customer/ABCCorporation`, {
-        params: { page: pageNo, q, status: statusQuery, priority: priorityQuery, source: sourceQuery },
+        params: {page: pageNo, q, status: statusQuery, priority: priorityQuery, source: sourceQuery},
       });
       setRows(resp.data.data || []);
       setPagination(
@@ -112,7 +112,7 @@ export default function LeadsPage() {
       );
       setPage(pageNo);
       setSelected({});
-    } catch (e) {
+    } catch(e) {
       console.error(e);
       toast.error("Failed to load leads");
     } finally {
@@ -139,31 +139,31 @@ export default function LeadsPage() {
 
   const toggleAll = (checked: boolean | string) => {
     const map: Record<string, boolean> = {};
-    if (checked) rows.forEach((r) => (map[r.id] = true));
+    if(checked) rows.forEach((r) => (map[r.id] = true));
     setSelected(map);
   };
 
   const toggleOne = (id: string, checked: boolean | string) => {
-    setSelected((prev) => ({ ...prev, [id]: !!checked }));
+    setSelected((prev) => ({...prev, [id]: !!checked}));
   };
 
   // actions
   // NOTE: onBulkDelete just sets dialog open, real delete in handleBulkDeleteConfirmed
   const handleBulkDeleteConfirmed = async () => {
     const ids = Object.keys(selected).filter((id) => selected[id]);
-    if (!ids.length) {
+    if(!ids.length) {
       toast.message("Select leads first");
       setDeleteBulkDialogOpen(false);
       return;
     }
     try {
       toast.loading("Deleting leads...");
-      await api.post(`/api/leads/bulk-delete`, { ids }); // adjust to your backend
+      await api.post(`/api/leads/bulk-delete`, {ids}); // adjust to your backend
       toast.dismiss();
       toast.success("Deleted");
       setDeleteBulkDialogOpen(false);
       fetchLeads(page);
-    } catch (e) {
+    } catch(e) {
       toast.dismiss();
       toast.error("Delete failed");
       setDeleteBulkDialogOpen(false);
@@ -176,10 +176,10 @@ export default function LeadsPage() {
 
   const onBulkAssign = async () => {
     const ids = Object.keys(selected).filter((id) => selected[id]);
-    if (!ids.length) return toast.message("Select leads first");
+    if(!ids.length) return toast.message("Select leads first");
     try {
       toast.loading("Assigning...");
-      await api.post(`/api/leads/bulk-assign`, { ids, assigneeId: "USER_ID" }); // adjust
+      await api.post(`/api/leads/bulk-assign`, {ids, assigneeId: "USER_ID"}); // adjust
       toast.dismiss();
       toast.success("Assigned");
       fetchLeads(page);
@@ -208,7 +208,7 @@ export default function LeadsPage() {
       toast.success("Quotation created");
       // navigate to quotation list or detail
       router.push("/quotation");
-    } catch (e) {
+    } catch(e) {
       toast.dismiss();
       toast.error("Failed to convert");
     }
@@ -216,7 +216,7 @@ export default function LeadsPage() {
 
   // Single delete by ID (uses dialog now, not window.confirm)
   const handleDeleteConfirmed = async () => {
-    if (!leadToDelete) return;
+    if(!leadToDelete) return;
     try {
       toast.loading("Deleting lead...");
       await api.delete(`/api/leads/${leadToDelete}`);
@@ -225,7 +225,7 @@ export default function LeadsPage() {
       setDeleteDialogOpen(false);
       setLeadToDelete(null);
       fetchLeads(page);
-    } catch (e) {
+    } catch(e) {
       toast.dismiss();
       toast.error("Failed to delete lead");
       setDeleteDialogOpen(false);
@@ -250,7 +250,7 @@ export default function LeadsPage() {
             aria-label="Select all"
           />
         ),
-        cell: ({ row }) => (
+        cell: ({row}) => (
           <Checkbox
             checked={!!selected[row.original.id]}
             onCheckedChange={(v) => toggleOne(row.original.id, v)}
@@ -263,7 +263,7 @@ export default function LeadsPage() {
       {
         accessorKey: "customerName",
         header: "Customer",
-        cell: ({ row }) => (
+        cell: ({row}) => (
           <button
             className="text-left hover:underline"
             onClick={() => router.push(`/leads/${row.original.id}`)}
@@ -273,13 +273,13 @@ export default function LeadsPage() {
           </button>
         ),
       },
-      { accessorKey: "contactPerson", header: "Contact" },
-      { accessorKey: "email", header: "Email" },
-      { accessorKey: "phoneNumber", header: "Phone" },
+      {accessorKey: "contactPerson", header: "Contact"},
+      {accessorKey: "email", header: "Email"},
+      {accessorKey: "phoneNumber", header: "Phone"},
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => (
+        cell: ({row}) => (
           <Badge className="capitalize" variant="secondary">
             {row.original.status}
           </Badge>
@@ -288,26 +288,26 @@ export default function LeadsPage() {
       {
         accessorKey: "priority",
         header: "Priority",
-        cell: ({ row }) => {
+        cell: ({row}) => {
           const p = row.original.priority || "low";
           const cls =
             p === "high"
               ? "bg-red-500 text-white"
               : p === "medium"
-              ? "bg-yellow-500 text-white"
-              : "bg-emerald-500 text-white";
+                ? "bg-yellow-500 text-white"
+                : "bg-emerald-500 text-white";
           return <Badge className={`capitalize ${cls}`}>{p}</Badge>;
         },
       },
       {
         accessorKey: "estimatedValue",
         header: "Value",
-        cell: ({ row }) => <>₹ {row.original.estimatedValue ?? 0}</>,
+        cell: ({row}) => <>₹ {row.original.estimatedValue ?? 0}</>,
       },
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => (
+        cell: ({row}) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -323,11 +323,21 @@ export default function LeadsPage() {
               <DropdownMenuItem
                 onClick={() => router.push(`/leads/quotation/${row.original.id}`)}
               >
-               Create Quotation
+                Create Quotation
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push(`/leads/purchase-orders/${row.original.id}`)}
+              >
+                View Purchase orders
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push(`/leads/view/${row.original.id}`)}
+              >
+                View Quatations
               </DropdownMenuItem>
               {/* Use AlertDialog for Delete Lead */}
               <AlertDialog open={deleteDialogOpen && leadToDelete === row.original.id} onOpenChange={(open) => {
-                if (!open) { setDeleteDialogOpen(false); setLeadToDelete(null);}
+                if(!open) {setDeleteDialogOpen(false); setLeadToDelete(null);}
               }}>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
@@ -397,7 +407,7 @@ export default function LeadsPage() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem> 
+              <SelectItem value="all">All</SelectItem>
               {STATUS.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
@@ -520,9 +530,23 @@ export default function LeadsPage() {
                       {flexRender(c.column.columnDef.cell, c.getContext())}
                     </TableCell>
                   ))}
+
+                  {/* <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/leads/view/${r.original.id}`)}
+                    >
+                      View
+                    </Button>
+                  </TableCell> */}
                 </TableRow>
+
+
               ))
+
             )}
+
           </TableBody>
         </Table>
       </div>
@@ -552,6 +576,6 @@ export default function LeadsPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
