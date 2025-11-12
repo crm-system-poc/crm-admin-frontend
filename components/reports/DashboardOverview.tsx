@@ -176,7 +176,7 @@ export default function DashboardOverview({
         isLoading={isLoading}
       />
       <StatCard
-        title="Quotations Sent"
+        title="Quotations Pendings"
         value={data.currentMonth.quotations.count}
         growth={data.currentMonth.quotations.growth}
         icon={FileText}

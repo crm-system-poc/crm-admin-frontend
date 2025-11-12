@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 // Allowed license types according to backend enum
 const LICENSE_TYPES = [
@@ -313,177 +314,249 @@ export default function CreatePurchaseOrder() {
   };
 
   return (
-    <div className="p-6  space-y-4 rounded-md border-1 mt-16 border-gray-200">
-      <h1 className="text-xl font-semibold">Create Purchase Order</h1>
-
-      {/* <Input
-        name="leadId"
-        placeholder="Lead ID"
-        value={leadIdParam}
-        readOnly
-        className="bg-gray-100 cursor-not-allowed"
-      />
-
-      <Input
-        name="quotationId"
-        placeholder="Quotation ID"
-        value={quotationIdParam}
-        readOnly
-        className="bg-gray-100 cursor-not-allowed"
-      /> */}
+    <div className="p-6 space-y-4 rounded-md mt-16 bg-white  shadow border border-gray-200 p-4 ">
+      <h1 className="text-xl font-semibold mb-4">Create Purchase Order</h1>
 
       {quoteLoading ? (
         <div className="py-6 text-center text-gray-400">Loading quotation&hellip;</div>
       ) : (
-      <>
-      <div>
-        <div className="flex items-center mb-2">
-          <span className="font-semibold">Product Items</span>
-          <Button
-            type="button"
-            size="sm"
-            onClick={addItem}
-            className="ml-auto px-3 py-1"
-            variant="outline"
-          >
-            + Add Item
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 gap-4">
-          {items.map((item, idx) => {
-            const licenseType = item.licenseType;
-            return (
-              <div
-                className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end"
-                key={idx}
+        <>
+          <div>
+            <div className="flex items-center mb-2">
+              <span className="font-semibold">Product Items</span>
+              <Button
+                type="button"
+                size="sm"
+                onClick={addItem}
+                className="ml-auto px-3 py-1"
+                variant="outline"
               >
-                <Input
-                  placeholder="Product ID"
-                  value={item.productId}
-                  onChange={(e) =>
-                    handleItemChange(idx, "productId", e.target.value)
-                  }
-                  required
-                  name={`items.${idx}.productId`}
-                />
-                <Input
-                  placeholder="Description"
-                  value={item.description}
-                  onChange={(e) =>
-                    handleItemChange(idx, "description", e.target.value)
-                  }
-                  required
-                  name={`items.${idx}.description`}
-                />
-                <Input
-                  placeholder="Unit Price"
-                  value={item.unitPrice}
-                  onChange={(e) =>
-                    handleItemChange(idx, "unitPrice", e.target.value)
-                  }
-                  type="number"
-                  name={`items.${idx}.unitPrice`}
-                  min="0"
-                  required
-                />
-                <Input
-                  placeholder="Quantity"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleItemChange(idx, "quantity", e.target.value)
-                  }
-                  type="number"
-                  name={`items.${idx}.quantity`}
-                  min="1"
-                  required
-                  className="md:col-span-1"
-                />
-                <div className="flex gap-1 md:col-span-1">
-                  <select
-                    name={`items.${idx}.licenseType`}
-                    value={item.licenseType}
-                    onChange={e =>
-                      handleItemChange(idx, "licenseType", e.target.value)
-                    }
-                    className="p-2 border rounded w-full"
-                    required
+                + Add Item
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-6">
+              {items.map((item, idx) => {
+                const licenseType = item.licenseType;
+                return (
+                  <div
+                    className="bg-white rounded-lg shadow border border-gray-200 p-4 grid gap-3 relative"
+                    key={idx}
                   >
-                    <option value="">License Type*</option>
-                    {LICENSE_TYPES.map(type => (
-                      <option value={type} key={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-                <Input
-                  placeholder="License Expiry Date"
-                  type="date"
-                  value={item.licenseExpiryDate}
-                  onChange={e =>
-                    handleItemChange(idx, "licenseExpiryDate", e.target.value)
-                  }
-                  name={`items.${idx}.licenseExpiryDate`}
-                  disabled={item.licenseType === "perpetual"}
-                  required={item.licenseType !== "perpetual"}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  className="col-span-1 md:col-auto md:ml-2 mt-2 md:mt-0"
-                  onClick={() => removeItem(idx)}
-                  disabled={items.length === 1}
-                  title={
-                    items.length === 1
-                      ? "At least one item required"
-                      : "Remove"
-                  }
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 ">
-        <Input
-          name="paymentTerms"
-          placeholder="Payment Terms"
-          onChange={handleChange}
-          value={form.paymentTerms}
-        />
-        <Input
-          name="deliveryTerms"
-          placeholder="Delivery Terms"
-          onChange={handleChange}
-          value={form.deliveryTerms}
-        />
-        <Input
-          name="poDate"
-          placeholder="PO Date"
-          onChange={handleChange}
-          value={form.poDate}
-          type="date"
-        />
-        <Textarea
-          name="notes"
-          placeholder="Notes"
-          rows={3}
-          onChange={handleChange}
-          value={form.notes}
-        />
-        <Input
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
-          required
-        />
-      </div>
+                    <div className="absolute top-3 right-3">
+                      {/* Replace Remove button with Trash2 Lucide icon */}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        disabled={items.length === 1}
+                        title={items.length === 1 ? "At least one item required" : "Remove"}
+                        className={`text-red-600 transition hover:text-red-800 disabled:text-gray-300 p-1 rounded-full border border-transparent hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 ${
+                          items.length === 1 ? "cursor-not-allowed" : ""
+                        }`}
+                        tabIndex={0}
+                      >
+                        <Trash2 size={20} strokeWidth={2} aria-label="Remove" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label
+                          className="font-semibold text-sm mb-1 block"
+                          htmlFor={`productId-${idx}`}
+                        >
+                          Product ID
+                        </label>
+                        <Input
+                          id={`productId-${idx}`}
+                          placeholder="Product ID"
+                          value={item.productId}
+                          onChange={(e) =>
+                            handleItemChange(idx, "productId", e.target.value)
+                          }
+                          required
+                          name={`items.${idx}.productId`}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label
+                          className="font-semibold text-sm mb-1 block"
+                          htmlFor={`description-${idx}`}
+                        >
+                          Description
+                        </label>
+                        <Input
+                          id={`description-${idx}`}
+                          placeholder="Description"
+                          value={item.description}
+                          onChange={(e) =>
+                            handleItemChange(idx, "description", e.target.value)
+                          }
+                          required
+                          name={`items.${idx}.description`}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label
+                          className="font-semibold text-sm mb-1 block"
+                          htmlFor={`unitPrice-${idx}`}
+                        >
+                          Unit Price
+                        </label>
+                        <Input
+                          id={`unitPrice-${idx}`}
+                          placeholder="Unit Price"
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            handleItemChange(idx, "unitPrice", e.target.value)
+                          }
+                          type="number"
+                          name={`items.${idx}.unitPrice`}
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label
+                          className="font-semibold text-sm mb-1 block"
+                          htmlFor={`quantity-${idx}`}
+                        >
+                          Quantity
+                        </label>
+                        <Input
+                          id={`quantity-${idx}`}
+                          placeholder="Quantity"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            handleItemChange(idx, "quantity", e.target.value)
+                          }
+                          type="number"
+                          name={`items.${idx}.quantity`}
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseType-${idx}`}>License Type</label>
+                        <select
+                          id={`licenseType-${idx}`}
+                          name={`items.${idx}.licenseType`}
+                          value={item.licenseType}
+                          onChange={e =>
+                            handleItemChange(idx, "licenseType", e.target.value)
+                          }
+                          className="p-2 border rounded w-full"
+                          required
+                        >
+                          <option value="">Select License Type</option>
+                          {LICENSE_TYPES.map(type => (
+                            <option value={type} key={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseExpiryDate-${idx}`}>License Expiry Date</label>
+                        <Input
+                          id={`licenseExpiryDate-${idx}`}
+                          placeholder="License Expiry Date"
+                          type="date"
+                          value={item.licenseExpiryDate}
+                          onChange={e =>
+                            handleItemChange(idx, "licenseExpiryDate", e.target.value)
+                          }
+                          name={`items.${idx}.licenseExpiryDate`}
+                          disabled={item.licenseType === "perpetual"}
+                          required={item.licenseType !== "perpetual"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-      <Button onClick={submitPurchaseOrder} disabled={loading} className="w-half">
-        {loading ? "Creating..." : "Create"}
-      </Button>
-      </>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+              <label className="font-semibold text-sm" htmlFor="paymentTerms">
+                Payment Terms
+              </label>
+              <Input
+                name="paymentTerms"
+                placeholder="Payment Terms"
+                onChange={handleChange}
+                value={form.paymentTerms}
+                id="paymentTerms"
+              />
+            </div>
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+              <label className="font-semibold text-sm" htmlFor="deliveryTerms">
+                Delivery Terms
+              </label>
+              <Input
+                name="deliveryTerms"
+                placeholder="Delivery Terms"
+                onChange={handleChange}
+                value={form.deliveryTerms}
+                id="deliveryTerms"
+              />
+            </div>
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+              <label className="font-semibold text-sm" htmlFor="poDate">
+                PO Date
+              </label>
+              <Input
+                name="poDate"
+                placeholder="PO Date"
+                onChange={handleChange}
+                value={form.poDate}
+                type="date"
+                id="poDate"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+              <label className="font-semibold text-sm" htmlFor="notes">
+                Notes
+              </label>
+              <Textarea
+                name="notes"
+                placeholder="Notes"
+                rows={3}
+                onChange={handleChange}
+                value={form.notes}
+                id="notes"
+              />
+            </div>
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+              <label className="font-semibold text-sm" htmlFor="poPdf">
+                PO PDF (Attachment)
+              </label>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
+                required
+                id="poPdf"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <Button
+              onClick={submitPurchaseOrder}
+              disabled={loading}
+              className="w-48 text-lg"
+              size="lg"
+            >
+              {loading ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );

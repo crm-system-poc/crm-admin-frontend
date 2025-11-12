@@ -18,22 +18,77 @@ import {
 } from "@/components/ui/form"
 import { toast } from "sonner"
 
+// Enum values for dropdowns taken from backend Lead.js model
+const STATUS_LIST = [
+  { label: "New", value: "new" },
+  { label: "Contacted", value: "contacted" },
+  { label: "Qualified", value: "qualified" },
+  { label: "Proposal Sent", value: "proposal_sent" },
+  { label: "Negotiation", value: "negotiation" },
+  { label: "Won", value: "won" },
+  { label: "Lost", value: "lost" },
+]
+const SOURCE_LIST = [
+  { label: "Website", value: "website" },
+  { label: "Referral", value: "referral" },
+  { label: "Social Media", value: "social_media" },
+  { label: "Cold Call", value: "cold_call" },
+  { label: "Email", value: "email" },
+  { label: "Other", value: "other" },
+]
+const PRIORITY_LIST = [
+  { label: "Low", value: "low" },
+  { label: "Medium", value: "medium" },
+  { label: "High", value: "high" },
+]
+
 const FormSchema = z.object({
   customerName: z.string().min(2, "Required"),
   contactPerson: z.string().min(2, "Required"),
   email: z.string().email("Invalid email"),
-  phoneNumber: z.string().min(10, "Invalid phone"),
-  altEmail: z.string().email("Invalid alternate email").optional().or(z.literal("")),
-  altPhoneNumber: z.string().min(10, "Invalid alternate phone").optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
+  phoneNumber: z
+    .string()
+    .min(10, "Invalid phone")
+    .regex(/^\+?[\d\s\-()]+$/, "Invalid phone format"),
+  altEmail: z
+    .string()
+    .email("Invalid alternate email")
+    .optional()
+    .or(z.literal("")),
+  altPhoneNumber: z
+    .string()
+    .min(10, "Invalid alternate phone")
+    .regex(/^\+?[\d\s\-()]+$/, "Invalid phone format")
+    .optional()
+    .or(z.literal("")),
+  addressStreet: z.string().min(2, "Required"),
+  addressCity: z.string().min(2, "Required"),
+  addressState: z.string().min(2, "Required"),
+  addressZipCode: z.string().min(2, "Required"),
+  addressCountry: z.string().min(2, "Required").default("India"),
   location: z.string().optional().or(z.literal("")),
-  projectTitle: z.string().min(2, "Required"),
+  // projectTitle field REMOVED (does not exist in Lead.js schema)
   requirementDetails: z.string().min(5, "Required"),
-  status: z.string().optional().or(z.literal("")),
-  source: z.string().optional().or(z.literal("")),
+  status: z.enum([
+    "new",
+    "contacted",
+    "qualified",
+    "proposal_sent",
+    "negotiation",
+    "won",
+    "lost",
+  ]),
+  source: z.enum([
+    "website",
+    "referral",
+    "social_media",
+    "cold_call",
+    "email",
+    "other",
+  ]),
   notes: z.string().optional().or(z.literal("")),
-  priority: z.string().optional().or(z.literal("")),
-  estimatedValue: z.coerce.number().min(1, "Enter valid amount"),
+  priority: z.enum(["low", "medium", "high"]),
+  estimatedValue: z.coerce.number().min(0, "Enter valid amount"),
   followUpDate: z.string().optional().or(z.literal("")),
 })
 
@@ -49,16 +104,20 @@ export default function CreateLead() {
       phoneNumber: "",
       altEmail: "",
       altPhoneNumber: "",
-      address: "",
+      addressStreet: "",
+      addressCity: "",
+      addressState: "",
+      addressZipCode: "",
+      addressCountry: "",
       location: "",
-      projectTitle: "",
       requirementDetails: "",
-      status: "",
-      source: "",
+      status: "new",
+      source: "website",
       notes: "",
-      priority: "",
+      priority: "low",
       estimatedValue: 0,
       followUpDate: "",
+  
     },
   })
 
@@ -66,7 +125,7 @@ export default function CreateLead() {
     try {
       toast.loading("Creating lead...")
 
-      // Only send the required keys
+      // Map form values to backend structure
       const {
         customerName,
         contactPerson,
@@ -74,7 +133,11 @@ export default function CreateLead() {
         phoneNumber,
         altEmail,
         altPhoneNumber,
-        address,
+        addressStreet,
+        addressCity,
+        addressState,
+        addressZipCode,
+        addressCountry,
         location,
         requirementDetails,
         status,
@@ -84,6 +147,14 @@ export default function CreateLead() {
         estimatedValue,
         followUpDate,
       } = data
+
+      const address = {
+        street: addressStreet,
+        city: addressCity,
+        state: addressState,
+        zipCode: addressZipCode,
+        country: addressCountry,
+      }
 
       await axios.post(
         "http://localhost:8080/api/leads",
@@ -102,7 +173,7 @@ export default function CreateLead() {
           notes,
           priority,
           estimatedValue,
-          followUpDate,
+          followUpDate: followUpDate ? followUpDate : undefined,
         },
         {
           headers: { "Content-Type": "application/json" },
@@ -112,7 +183,7 @@ export default function CreateLead() {
 
       toast.dismiss()
       toast.success("Lead created successfully ✅")
-      router.push("/leads") // redirect to leads list
+      // router.push("/leads") // redirect to leads list
     } catch (error) {
       toast.dismiss()
       toast.error("Something went wrong ❌")
@@ -123,7 +194,6 @@ export default function CreateLead() {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6 border rounded-md mt-16">
       <h1 className="text-2xl font-semibold">Create Lead</h1>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* 3x3 grid */}
@@ -141,7 +211,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="contactPerson"
@@ -155,7 +224,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="email"
@@ -169,7 +237,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="phoneNumber"
@@ -183,7 +250,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="altEmail"
@@ -197,7 +263,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="altPhoneNumber"
@@ -212,14 +277,67 @@ export default function CreateLead() {
               )}
             />
 
+            {/* Address Fields: street/city/state/zip/country */}
             <FormField
               control={form.control}
-              name="address"
+              name="addressStreet"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="Office Address" {...field} />
+                    <Input placeholder="123 Main Street" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="addressCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Mumbai" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="addressState"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Maharashtra" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="addressZipCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Zip Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="400001" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="addressCountry"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="India" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -240,6 +358,7 @@ export default function CreateLead() {
               )}
             />
 
+            {/* STATUS: select */}
             <FormField
               control={form.control}
               name="status"
@@ -247,13 +366,23 @@ export default function CreateLead() {
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <FormControl>
-                    <Input placeholder="New/Contacted" {...field} />
+                    <select
+                      {...field}
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      {STATUS_LIST.map(({ label, value }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* SOURCE */}
             <FormField
               control={form.control}
               name="source"
@@ -261,13 +390,23 @@ export default function CreateLead() {
                 <FormItem>
                   <FormLabel>Source</FormLabel>
                   <FormControl>
-                    <Input placeholder="Referral/Website/..." {...field} />
+                    <select
+                      {...field}
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      {SOURCE_LIST.map(({ label, value }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* PRIORITY */}
             <FormField
               control={form.control}
               name="priority"
@@ -275,7 +414,16 @@ export default function CreateLead() {
                 <FormItem>
                   <FormLabel>Priority</FormLabel>
                   <FormControl>
-                    <Input placeholder="High/Medium/Low" {...field} />
+                    <select
+                      {...field}
+                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      {PRIORITY_LIST.map(({ label, value }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -293,10 +441,16 @@ export default function CreateLead() {
                       type="number"
                       placeholder="50000"
                       {...field}
-                      value={field.value === undefined || field.value === null ? "" : String(field.value)}
+                      value={
+                        field.value === undefined ||
+                        field.value === null ||
+                        field.value === ""
+                          ? ""
+                          : String(field.value)
+                      }
                       onChange={(e) => {
-                        const val = e.target.value;
-                        field.onChange(val === "" ? "" : Number(val));
+                        const val = e.target.value
+                        field.onChange(val === "" ? "" : Number(val))
                       }}
                     />
                   </FormControl>
@@ -304,7 +458,6 @@ export default function CreateLead() {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="followUpDate"

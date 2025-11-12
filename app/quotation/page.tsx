@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { MoreVertical, Trash2, Eye, FilePlus2 } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = [
@@ -34,6 +34,15 @@ const STATUS_OPTIONS = [
   "rejected",
   "expired"
 ];
+
+// Map status to badge color classes
+const statusColorMap: Record<string, string> = {
+  draft: "bg-gray-200 text-gray-700",
+  sent: "bg-pink-100 text-pink-800",
+  accepted: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  expired: "bg-yellow-100 text-yellow-800", // You can customize for 'expired' as desired
+};
 
 export default function QuotationList() {
   const router = useRouter();
@@ -49,6 +58,21 @@ export default function QuotationList() {
   // For delete dialog
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Track which dropdown menu is open
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  // Ref for navigation timeout – used for delayed navigation dismissal after dropdown closes if needed
+  const navigateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup any pending timeout on unmount or rerender
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current) {
+        clearTimeout(navigateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Fetch with filters and pagination
   const fetchData = async () => {
@@ -71,14 +95,11 @@ export default function QuotationList() {
 
   useEffect(() => {
     fetchData();
-    // We want to run when page, status, or customerName changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, status, customerName]);
 
-  // Reset page if filter/search changes
   useEffect(() => {
     setPage(1);
-    // don't fetch here, fetch is triggered above by page/stat/cust change
     // eslint-disable-next-line
   }, [status, customerName]);
 
@@ -88,9 +109,7 @@ export default function QuotationList() {
     try {
       await api.delete(`/api/quotations/${id}`);
       toast.success("Quotation deleted.");
-      // Remove from list
       setQuotations(qs => qs.filter(q => q.id !== id));
-      // Optionally you may want to refetch for accurate pagination
       fetchData();
     } catch (err) {
       toast.error("Failed to delete quotation.");
@@ -100,8 +119,24 @@ export default function QuotationList() {
     }
   };
 
+  // Fast Navigation Handlers for DropdownMenuItem
+  const handleViewDetails = (q: any) => {
+    // Navigate instantly without waiting for menu to close
+    router.push(`/quotation/${q.id}`);
+    setOpenDropdownId(null);
+  };
+  const handleCreatePO = (q: any) => {
+    if (q.id && q.leadId && q.leadId.id) {
+      router.push(`quotation/purchase-order/${q.id}/${q.leadId.id}`);
+      setOpenDropdownId(null);
+    } else {
+      toast.error("Quotation or Lead info missing.");
+      setOpenDropdownId(null);
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
         {/* <Button onClick={() => router.push("/quotation/create")}>Create Quotation</Button> */}
@@ -151,49 +186,57 @@ export default function QuotationList() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              <TableHead className="w-10 text-center">Sr.No</TableHead>
               <TableHead>Quotation</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Lead</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Value</TableHead>
-              <TableHead>PDF</TableHead>
+              <TableHead>Documentation</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">Loading...</TableCell>
+                <TableCell colSpan={8} className="text-center py-8">Loading...</TableCell>
               </TableRow>
             ) : quotations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">No quotations found.</TableCell>
+                <TableCell colSpan={8} className="text-center py-8">No quotations found.</TableCell>
               </TableRow>
             ) : (
-              quotations.map((q: any) => (
+              quotations.map((q: any, idx: number) => (
                 <TableRow key={q.id} className="hover:bg-muted/30">
+                  <TableCell className="text-center">{(page - 1) * 10 + idx + 1}</TableCell>
                   <TableCell>{q.quoteId}</TableCell>
                   <TableCell>
-                    {q.customerDetails?.customerName}
-                    <div className="text-xs text-muted-foreground">{q.customerDetails?.contactPerson}</div>
+                    {/* {q.customerDetails?.customerName} */}
+                    <div>{q.customerDetails?.contactPerson}</div>
                   </TableCell>
                   <TableCell>
                     {q.leadId?.id ? (
                       <Button
                         size="sm"
                         variant="link"
-                        className="px-0 h-auto text-blue-700"
+                        className="px-0 h-auto text-black"
                         onClick={() => router.push(`/leads/${q.leadId.id}`)}
                       >
                         {q.leadId.customerName}
-                        <div className="text-xs text-muted-foreground">{q.leadId.contactPerson}</div>
+                        {/* <div className="text-xs text-muted-foreground">{q.leadId.contactPerson}</div> */}
                       </Button>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className="capitalize">{q.status}</Badge>
+                    <Badge
+                      className={
+                        `capitalize ${statusColorMap[q.status] || "bg-gray-100 text-gray-700"}`
+                      }
+                    >
+                      {q.status}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {q.currency === "INR" ? "₹" : q.currency} {q.grandTotal?.toLocaleString() ?? "—"}
@@ -206,14 +249,20 @@ export default function QuotationList() {
                         rel="noopener noreferrer"
                         className="underline text-blue-700 text-sm"
                       >
-                        {q.pdfFile.originalName}
+                        {/* Show both Lead Name and PDF Filename if possible */}
+                        {q.leadId && q.leadId.customerName
+                          ? `${q.leadId.customerName} - document`
+                          : q.pdfFile.originalName}
                       </a>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
+                    <DropdownMenu
+                      open={openDropdownId === q.id}
+                      onOpenChange={(open) => setOpenDropdownId(open ? q.id : null)}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-7 w-7">
                           <MoreVertical className="w-4 h-4" />
@@ -221,18 +270,17 @@ export default function QuotationList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => router.push(`/quotation/${q.id}`)}
+                          onSelect={e => {
+                            e.preventDefault();
+                            handleViewDetails(q);
+                          }}
                         >
-         
                           View Detail
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => {
-                            if (q.id && q.leadId && q.leadId.id) {
-                              router.push(`quotation/purchase-order/${q.id}/${q.leadId.id}`);
-                            } else {
-                              toast.error("Quotation or Lead info missing.");
-                            }
+                          onSelect={e => {
+                            e.preventDefault();
+                            handleCreatePO(q);
                           }}
                         >
                           Create Purchase Order
@@ -240,7 +288,11 @@ export default function QuotationList() {
                         <DropdownMenuSeparator />
                         <AlertDialog open={deleteId === q.id} onOpenChange={(open) => {if (!open) setDeleteId(null); }}>
                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onClick={() => setDeleteId(q.id)}>
+                            <DropdownMenuItem onSelect={e => {
+                              e.preventDefault();
+                              setOpenDropdownId(null); // make sure dropdown closes on delete prompt
+                              setDeleteId(q.id);
+                            }}>
                               Delete
                             </DropdownMenuItem>
                           </AlertDialogTrigger>

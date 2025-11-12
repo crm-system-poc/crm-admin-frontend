@@ -13,6 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 // Simple AlertDialog
 function ConfirmDialog({ open, onConfirm, onCancel, title, description }: any) {
@@ -144,7 +152,7 @@ export default function PurchaseOrderList() {
   };
 
   return (
-    <div className="p-6 space-y-6 ">
+    <div className="p-6 max-w-6xl mx-auto space-y-6 ">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Purchase Orders</h1>
       </div>
@@ -153,6 +161,7 @@ export default function PurchaseOrderList() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
+              <TableHead className="w-10 text-center">Sr.No</TableHead>
               <TableHead>PO Number</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Lead</TableHead>
@@ -164,18 +173,19 @@ export default function PurchaseOrderList() {
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   Purchase order not found.
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((po) => (
+              orders.map((po, idx) => (
                 <TableRow key={po.id} className="hover:bg-muted/30">
+                  <TableCell className="text-center">{idx + 1}</TableCell>
                   <TableCell>{po.poNumber || po.id}</TableCell>
-                  <TableCell>{po.customerDetails?.customerName || "-"}</TableCell>
+                  <TableCell>{po.customerDetails?.contactPerson || "-"}</TableCell>
                   <TableCell>
                     {po.leadId
-                      ? `${po.leadId.customerName} (${po.leadId.id.substring(0, 6)}...)`
+                      ? `${po.leadId.customerName} `
                       : "-"}
                   </TableCell>
                   <TableCell>
@@ -186,33 +196,42 @@ export default function PurchaseOrderList() {
                   <TableCell>
                     <Badge className="capitalize">{po.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right flex gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/purchase-orders/${po.id}`)}
-                    >
-                      View
-                    </Button>
-                    {po.poPdf?.s3Url && (
-                      <a
-                        href={po.poPdf.s3Url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="secondary" size="sm">
-                          PDF
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
-                      </a>
-                    )}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(po.id)}
-                      disabled={deleting && deleteId === po.id}
-                    >
-                      Delete
-                    </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/purchase-orders/${po.id}`)}
+                        >
+                          View
+                        </DropdownMenuItem>
+                        {po.poPdf?.s3Url && (
+                          <DropdownMenuItem
+                            asChild
+                          >
+                            <a
+                              href={po.poPdf.s3Url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              PDF
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(po.id)}
+                          disabled={deleting && deleteId === po.id}
+                          className="text-destructive"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))

@@ -146,40 +146,14 @@ export default function PurchaseOrderDetail() {
     <div className="p-6  space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>
-            Purchase Order
+          <CardTitle className="flex" >
+            Purchase Order &nbsp; <span className="block font-semibold">{order.poNumber}</span>
+
           
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* PO Number, Status & Dates */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            {/* PO Number */}
-            <div>
-              <span className="block text-xs text-muted-foreground">PO Number</span>
-              <span className="block font-semibold">{order.poNumber}</span>
-            </div>
-            {/* PO Status */}
-            <div className="flex items-center gap-4">
-              <Badge className="capitalize px-6 py-1">{order.status}</Badge>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="acknowledged">Acknowledged</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={updateStatus} size="sm">Update Status</Button>
-            </div>
-          </div>
          
-
           {/* Customer (PO) details */}
           <div>
             <h2 className="font-semibold mb-2 text-lg">Customer Details</h2>
@@ -229,6 +203,23 @@ export default function PurchaseOrderDetail() {
                   className="font-semibold"
                 />
               </div>
+              <div className="flex items-center gap-4 mt-4">
+              {/* <Badge className="capitalize px-6 py-1">{order.status}</Badge> */}
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={updateStatus} size="sm">Update Status</Button>
+            </div>
             </div>
           </div>
 
