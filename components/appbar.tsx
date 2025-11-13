@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export function AppBar() {
   const pathname = usePathname();
@@ -43,9 +44,9 @@ export function AppBar() {
       toast.dismiss();
       toast.success("Logged out successfully.");
       router.push("/login");
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-    }
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
 
     } catch (error) {
       toast.dismiss();
@@ -54,7 +55,8 @@ export function AppBar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/70 backdrop-blur-xl shadow-sm">      <div className="flex items-center h-16 px-4 gap-4">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/70 backdrop-blur-xl shadow-sm">
+      <div className="flex items-center h-16 px-4 gap-4">
         {/* Mobile Menu */}
         <Sheet>
           <SheetTrigger className="md:hidden">
@@ -86,10 +88,18 @@ export function AppBar() {
           href="/"
           className="flex items-center gap-2 font-semibold text-xl tracking-tight"
         >
-          <span className="h-8 w-8 grid place-items-center rounded-full bg-pink-600 text-white font-bold shadow-sm">
-            L
+          <span className="h-8 w-8 grid place-items-center rounded-full bg-pink-600 text-white font-bold shadow-sm overflow-hidden">
+            <Image
+              src="/l.png"
+              alt="Logo"
+              width={52}
+              height={52}
+              className="object-cover rounded-full"
+              priority
+            />
           </span>
-          <span>Logo</span>
+          {/* Optionally, you can remove the text or keep just for accessibility */}
+          <span>Ridipt</span>
         </Link>
 
         {/* Desktop Menu */}

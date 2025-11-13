@@ -120,12 +120,27 @@ export const useReports = () => {
     }
   };
 
+  // getAllExpireLicense
+  const getAllExpireLicense = async () => {
+    try {
+      const url = `/api/reports/expiring-licenses`;
+      const response = await api.get(
+        url,
+        { withCredentials: true }
+      );
+      console.log(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch license expiry data:", error);
+    }
+  };
+
   const refreshReports = async () => {
     setIsLoading(true);
     await Promise.all([
       fetchDashboardData(),
       fetchSalesFunnelData(),
       fetchLicenseExpiryData(),
+      getAllExpireLicense()
     ]);
     setIsLoading(false);
   };
