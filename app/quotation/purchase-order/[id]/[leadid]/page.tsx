@@ -87,6 +87,7 @@ export default function CreatePurchaseOrder() {
     poDate: "",
   });
   const [poPdfFile, setPoPdfFile] = useState<File | null>(null);
+  const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Product-related states
@@ -499,6 +500,9 @@ export default function CreatePurchaseOrder() {
       formData.append("poDate", form.poDate);
       // PDF file
       formData.append("poPdf", poPdfFile);
+      if (licenseFile) {
+        formData.append("licenseFile", licenseFile);
+      }
 
       const res = await api.post(
         "http://localhost:8080/api/purchase-orders",
@@ -845,7 +849,7 @@ export default function CreatePurchaseOrder() {
           </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2 md:col-span-1">
               <label className="font-semibold text-sm" htmlFor="notes">
                 Notes
               </label>
@@ -858,17 +862,33 @@ export default function CreatePurchaseOrder() {
                 id="notes"
               />
             </div>
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-              <label className="font-semibold text-sm" htmlFor="poPdf">
-                PO PDF (Attachment)
-              </label>
-              <Input
-                type="file"
-                accept="application/pdf"
-                onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
-                required
-                id="poPdf"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                <label className="font-semibold text-sm" htmlFor="poPdf">
+                  PO PDF (Attachment)
+                </label>
+                <Input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
+                  required
+                  id="poPdf"
+                />
+              </div>
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-sm" htmlFor="licenseFile">
+                    License File
+                  </label>
+                  <span className="text-xs text-muted-foreground">(Optional)</span>
+                </div>
+                <Input
+                  type="file"
+                  accept=".pdf,.doc,.docx,image/*"
+                  onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
+                  id="licenseFile"
+                />
+              </div>
             </div>
           </div>
 
