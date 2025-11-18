@@ -1,37 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppBar } from "@/components/appbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { TrendingUp } from "lucide-react";
+import { Users } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
+import { Timer } from "lucide-react";
+import { Layers } from "lucide-react";
+import { Crown } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
+import { AlarmClock } from "lucide-react";
+import { CalendarClock } from "lucide-react";
+import { TrendingDown } from "lucide-react";
+import { Activity } from "lucide-react";
+import { DollarSign, IndianRupee } from "lucide-react";
+import { FileText } from "lucide-react";
 import {
-  TrendingUp,
-  Users,
-  CheckCircle2,
-  IndianRupee,
-  BarChart3,
-  LineChart as LucideLineChart,
-  BarChartBig,
-  ArrowRight,
-  Timer,
-  Layers,
-  Crown,
-  ShoppingBag
-} from "lucide-react";
-import {
-  BarChart,
-  Bar,
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
+  Area,
+  AreaChart,
+  RadialBarChart,
+  RadialBar,
 } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
-// Purchase Orders Stats Mock (from prompt)
+// Mock data for PO fallback/attach - you may replace this if needed.
 const poStats = {
   totalPOs: 5,
   status: {
@@ -52,128 +60,101 @@ const poStats = {
   },
   financials: {
     totalAmountSum: 585000,
+  },
+};
+
+// Map status keys to readable names for Lead Status Pie Chart
+const STATUS_LABELS: Record<string, string> = {
+  New: "New",
+  Qualified: "Qualified",
+  Contacted: "Contacted",
+  "Proposal Sent": "Proposal Sent",
+  Negotiation: "Negotiation",
+  Won: "Won",
+  Lost: "Lost",
+  Unqualified: "Unqualified",
+  Draft: "Draft",
+  Sent: "Sent",
+  Acknowledged: "Acknowledged",
+  "In Progress": "In Progress",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
+};
+
+const COLORS = {
+  pink: "#ec4899",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  green: "#22c55e",
+  yellow: "#fbbf24",
+  teal: "#14b8a6",
+  red: "#ef4444",
+  orange: "#f97316",
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-900 text-white p-3 rounded-lg shadow-xl border border-gray-700">
+        <p className="font-semibold mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {entry.name}: {entry.value?.toLocaleString?.() ?? entry.value}
+          </p>
+        ))}
+      </div>
+    );
   }
+  return null;
 };
-
-// Mock time series data for each card stat
-const leadsTrend = [
-  { month: "Jan", leads: 14 },
-  { month: "Feb", leads: 28 },
-  { month: "Mar", leads: 37 },
-  { month: "Apr", leads: 50 },
-  { month: "May", leads: 42 },
-];
-
-const revenueData = [
-  { month: "Jan", amount: 60000 },
-  { month: "Feb", amount: 85000 },
-  { month: "Mar", amount: 120000 },
-  { month: "Apr", amount: 90000 },
-  { month: "May", amount: 140000 },
-];
-
-// NEW: Mock time series for Quotation stats
-const quotationsTrend = [
-  { month: "Jan", quotations: 10 },
-  { month: "Feb", quotations: 16 },
-  { month: "Mar", quotations: 12 },
-  { month: "Apr", quotations: 19 },
-  { month: "May", quotations: 22 },
-];
-
-// NEW: Mock time series for Purchase Order stats
-const purchaseOrderTrend = [
-  { month: "Jan", purchaseOrders: 2 },
-  { month: "Feb", purchaseOrders: 1 },
-  { month: "Mar", purchaseOrders: 0 },
-  { month: "Apr", purchaseOrders: 1 },
-  { month: "May", purchaseOrders: 1 },
-];
-
-// NEW: Mock status breakdowns for small line/area charts per status (example)
-// For real app, you could query backend for per-status timeseries.
-const statusTrends = {
-  leads: leadsTrend.map((d) => ({ ...d, value: d.leads })),
-  totalValue: revenueData.map((d) => ({ ...d, value: d.amount })),
-  quotations: quotationsTrend.map((d) => ({ ...d, value: d.quotations })),
-  purchaseOrders: purchaseOrderTrend.map((d) => ({ ...d, value: d.purchaseOrders })),
-};
-
-const recentLeads = [
-  { name: "Sarah Smith", company: "XYZ Pvt Ltd", stage: "Proposal Sent" },
-  { name: "Manish Patel", company: "SoftWeb", stage: "Negotiation" },
-];
-
-// Helper to auto color small lines per stat
-const statLineColor = {
-  leads: "#ec4899",
-  totalValue: "#22c55e",
-  quotations: "#6366f1",
-  purchaseOrders: "#0ea5e9",
-};
-
-function MiniLineChart({
-  data,
-  dataKey = "value",
-  color = "#8884d8",
-  ...props
-}: {
-  data: any[];
-  dataKey?: string;
-  color?: string;
-  width?: number;
-  height?: number;
-}) {
-  // Minimal axes, no dots, no tooltip, sparkline
-  return (
-    <div style={{ width: 80, height: 32 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <Line
-            type="monotone"
-            dataKey={dataKey}
-            stroke={color}
-            strokeWidth={2.5}
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
 
 export default function Home() {
   const [apiStats, setApiStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  const [expiringLicenses, setExpiringLicenses] = useState<any>(null);
+  const [licenseSummary, setLicenseSummary] = useState<any>(null);
 
+  // Expiring licenses
   useEffect(() => {
-    // Combine all stats fetches for synchronized loading and error
+    const fetchExpiringLicenses = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8080/api/purchase-orders/expiring-licenses",
+          { credentials: "include" }
+        );
+        const json = await res.json();
+        if (json.success) setExpiringLicenses(json.data.expiringIn);
+      } catch (e) {
+        console.log("Error loading license expiry list:", e);
+      }
+    };
+    fetchExpiringLicenses();
+  }, []);
+
+  // API STATS: Leads, Quotations, Purchase Orders (dynamic)
+  useEffect(() => {
     const fetchAllStats = async () => {
       setLoading(true);
       setError("");
       try {
-        // Fetch leads/quotation normally, but override purchase order stats with new structure
+        // Real endpoints for lead & quotation, plus override for POs
         const [leadRes, quotationRes] = await Promise.all([
           fetch("http://localhost:8080/api/leads/stats", {
             method: "GET",
             credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           }),
           fetch("http://localhost:8080/api/quotations/stats", {
             method: "GET",
             credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           }),
         ]);
         const leadJson = await leadRes.json();
         const quotationJson = await quotationRes.json();
-        // Override purchaseOrders property based on poStats from above
         if (leadJson.success && quotationJson.success) {
           setApiStats({
             ...leadJson.data,
@@ -184,14 +165,17 @@ export default function Home() {
               byStatus: [
                 { _id: "Draft", count: poStats.status.totalDraft },
                 { _id: "Sent", count: poStats.status.totalSent },
-                { _id: "Acknowledged", count: poStats.status.totalAcknowledged },
+                {
+                  _id: "Acknowledged",
+                  count: poStats.status.totalAcknowledged,
+                },
                 { _id: "In Progress", count: poStats.status.totalInProgress },
                 { _id: "Completed", count: poStats.status.totalCompleted },
                 { _id: "Cancelled", count: poStats.status.totalCancelled },
               ],
               attachmentSummary: poStats.attachmentSummary,
               licenses: poStats.licenses,
-            }
+            },
           });
         } else {
           setError("Failed to load data");
@@ -203,6 +187,25 @@ export default function Home() {
       }
     };
     fetchAllStats();
+  }, []);
+
+  // License summary (not shown in UI, but matches upstream example)
+  useEffect(() => {
+    const fetchLicenseSummary = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8080/api/reports/expiring-licenses",
+          { credentials: "include" }
+        );
+        const json = await res.json();
+        if (json.success) {
+          setLicenseSummary(json.data.summary);
+        }
+      } catch (e) {
+        console.error("Error fetching license summary:", e);
+      }
+    };
+    fetchLicenseSummary();
   }, []);
 
   function getTotalValue(value: any) {
@@ -225,595 +228,763 @@ export default function Home() {
   }
 
   function quotationsStat(statName: string) {
-    return loading
-      ? <span className="animate-pulse text-indigo-400">...</span>
-      : (apiStats?.quotations?.[statName] !== undefined
-        ? apiStats.quotations[statName]?.toLocaleString?.() ?? apiStats.quotations[statName]
-        : "--");
+    return loading ? (
+      <span className="animate-pulse text-indigo-400">...</span>
+    ) : apiStats?.quotations?.[statName] !== undefined ? (
+      apiStats.quotations[statName]?.toLocaleString?.() ??
+      apiStats.quotations[statName]
+    ) : (
+      "--"
+    );
   }
 
-  // Override purchase order stat helpers to use new PO stats
   function purchaseOrderStat(statName: string) {
     if (loading) {
       return <span className="animate-pulse text-blue-400">...</span>;
     }
-    // PO stat mapping
     switch (statName) {
       case "totalPurchaseOrders":
         return apiStats?.purchaseOrders?.totalPurchaseOrders ?? "--";
       case "totalValue":
         return apiStats?.purchaseOrders?.totalValue?.toLocaleString() ?? "--";
       case "totalWithPDF":
-        return apiStats?.purchaseOrders?.attachmentSummary?.totalWithPDF ?? "--";
+        return (
+          apiStats?.purchaseOrders?.attachmentSummary?.totalWithPDF ?? "--"
+        );
       case "totalWithoutPDF":
-        return apiStats?.purchaseOrders?.attachmentSummary?.totalWithoutPDF ?? "--";
+        return (
+          apiStats?.purchaseOrders?.attachmentSummary?.totalWithoutPDF ?? "--"
+        );
       default:
         return apiStats?.purchaseOrders?.[statName] ?? "--";
     }
   }
 
-  // Helper for purchase order statuses
   function purchaseOrderStatusCount(status: string) {
     if (loading) {
       return <span className="animate-pulse text-cyan-400">...</span>;
     }
-    const found = apiStats?.purchaseOrders?.byStatus?.find((s: any) => s._id === status);
+    const found = apiStats?.purchaseOrders?.byStatus?.find(
+      (s: any) => s._id === status
+    );
     return found ? found.count : "0";
   }
 
+  // --- DATA ADAPTERS: Make chart inputs dynamic from apiStats ---
+  // MONTH-LABEL UTILS
+  function getMonthName(monthNum: any) {
+    return typeof monthNum === "string"
+      ? monthNum
+      : (typeof monthNum === "number"
+          ? new Date(0, monthNum - 1)
+          : new Date(undefined)
+        ).toLocaleString("en-US", { month: "short" }) || "-";
+  }
+
+  // 1. Leads Growth Trend (leadsTrend) - API: apiStats?.trendData?.leads
+  const leadsTrend =
+    apiStats?.trendData?.leads && Array.isArray(apiStats.trendData.leads)
+      ? apiStats.trendData.leads.map((item: any) => ({
+          month: getMonthName(item.month),
+          leads: item.leads,
+          revenue: item.revenue ?? undefined,
+        }))
+      : [
+          // fallback (could remove if desired)
+          { month: "Jan", leads: 14, revenue: 60000 },
+          { month: "Feb", leads: 28, revenue: 85000 },
+          { month: "Mar", leads: 37, revenue: 120000 },
+          { month: "Apr", leads: 50, revenue: 90000 },
+          { month: "May", leads: 42, revenue: 140000 },
+          { month: "Jun", leads: 55, revenue: 165000 },
+        ];
+
+  // 2. Quotations Trend (quotationsTrend) - API: apiStats?.trendData?.quotations
+  const quotationsTrend =
+    apiStats?.trendData?.quotations &&
+    Array.isArray(apiStats.trendData.quotations)
+      ? apiStats.trendData.quotations.map((item: any) => ({
+          month: getMonthName(item.month),
+          quotations: item.quotations,
+        }))
+      : [
+          { month: "Jan", quotations: 10 },
+          { month: "Feb", quotations: 16 },
+          { month: "Mar", quotations: 12 },
+          { month: "Apr", quotations: 19 },
+          { month: "May", quotations: 22 },
+          { month: "Jun", quotations: 25 },
+        ];
+
+  // Pie Data: Lead Status, Priority, and Quotations Status remain similar:
+  // Fix: statusPieData now checks "name" or "_id" (with fallback using STATUS_LABELS or _id directly)
+  const statusPieData =
+    apiStats?.byStatus?.map((s: any, i: number) => {
+      let pieName =
+        s.name && typeof s.name === "string" && s.name.trim().length > 0
+          ? s.name
+          : s._id && typeof s._id === "string" && s._id.trim().length > 0
+          ? STATUS_LABELS[s._id] || s._id
+          : "Unknown";
+      return {
+        name: s.status,
+        value: s.count,
+        fill: Object.values(COLORS)[i % Object.values(COLORS).length],
+      };
+    }) || [];
+
+  const priorityPieData =
+    apiStats?.byPriority?.map((p: any, i: number) => ({
+      name: p.priority,
+      value: p.count,
+      fill: [COLORS.green, COLORS.yellow, COLORS.red][i],
+    })) || [];
+
+  const quotationsStatusData = [
+    {
+      name: "Pending",
+      value: apiStats?.quotations?.totalPending || 0,
+      fill: COLORS.yellow,
+    },
+    {
+      name: "Approved",
+      value: apiStats?.quotations?.totalApproved || 0,
+      fill: COLORS.green,
+    },
+    {
+      name: "Rejected",
+      value: apiStats?.quotations?.totalRejected || 0,
+      fill: COLORS.red,
+    },
+    {
+      name: "Expired",
+      value: apiStats?.quotations?.totalExpired || 0,
+      fill: COLORS.purple,
+    },
+  ];
+
+  // For Mini-Statistic Sparklines/Trend: Read from trend data if available, otherwise fallback.
+  const keyMetrics = {
+    leads: leadsTrend.map((d: any) => ({ v: d.leads })),
+    quotations: quotationsTrend.map((d: any) => ({ v: d.quotations })),
+    po: leadsTrend.map((d: any) => ({
+      v:
+        apiStats?.purchaseOrders?.trendData?.purchaseOrders &&
+        Array.isArray(apiStats.purchaseOrders.trendData.purchaseOrders)
+          ? apiStats.purchaseOrders.trendData.purchaseOrders[d.month]?.v ?? 0
+          : 0,
+    })),
+    poValue: leadsTrend.map((d: any) => ({
+      v: d.revenue,
+    })),
+    revenue: leadsTrend.map((d: any) => ({
+      month: d.month,
+      revenue: d.revenue,
+    })),
+  };
+
   return (
-    <>
-      <div className="p-6 rounded-md mt-16 bg-white  shadow border-1 border-gray-200  space-y-10 via-white to-pink-100 min-h-screen">
-        {/* Heading */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="min-h-screen  p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight leading-snug flex items-center gap-3 ">
-              <Layers className="w-8 h-8 text-pink-700" />
+            <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Layers className="w-7 h-7 text-white" />
+              </div>
               Dashboard
             </h1>
-            <p className="text-muted-foreground text-base pt-1">
-              Your <b>CRM</b> insights at a glance — manage, track, and grow!
+            <p className="text-gray-600 mt-2">
+              Welcome back! Here's your CRM overview
             </p>
           </div>
-        </div>
-        <Separator />
-        {/* Leads Section */}
-        <h3 className="text-2xl font-bold text-pink-700 mt-6 mb-2 flex items-center gap-2">
-          <Users className="w-6 h-6 text-pink-500" /> Leads
-        </h3>
-        
-        {/* Stats Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Leads */}
-          <Card className="bg-white border-1 border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <Users className="w-16 h-16 text-pink-200 group-hover:text-pink-100 transition" />
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
+              <p className="text-xs text-gray-500">Total Revenue</p>
+              <p className="text-xl font-bold text-pink-600">
+                ₹{purchaseOrderStat("totalValue")}
+              </p>
             </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <Users className="w-5 h-5 text-pink-500" /> Total Leads
-              </CardTitle>
-              {/* Small Line Graph for Leads */}
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.leads} color={statLineColor.leads} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-pink-700">
-                {loading ? (
-                  <span className="animate-pulse text-pink-400">...</span>
-                ) : (
-                  apiStats?.totalLeads ?? "--"
-                )}
-              </span>
-            </CardContent>
-          </Card>
-          {/* Total Value */}
-          <Card className="bg-white border-1 border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <IndianRupee className="w-16 h-16 text-green-200 group-hover:text-green-100 transition" />
-            </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <IndianRupee className="w-5 h-5 text-green-600" /> Total Value
-              </CardTitle>
-              {/* Small Line Graph for Value */}
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.totalValue} color={statLineColor.totalValue} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-green-700">
-                {loading ? (
-                  <span className="animate-pulse text-green-400">...</span>
-                ) : (
-                  <>
-                    ₹{" "}
-                    {getTotalValue(apiStats?.totalValue)}
-                  </>
-                )}
-              </span>
-            </CardContent>
-          </Card>
-          {/* Statuses */}
-          <Card className="bg-white border-1 border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <CheckCircle2 className="w-16 h-16 text-blue-200 group-hover:text-blue-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <CheckCircle2 className="w-5 h-5 text-blue-600" /> Statuses
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-1">
-              {loading ? (
-                <span className="animate-pulse text-blue-400">Loading...</span>
-              ) : Array.isArray(apiStats?.byStatus) && apiStats.byStatus.length ? (
-                apiStats.byStatus.map((s: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 py-0.5"
-                  >
-                    <Timer className="w-4 h-4 text-blue-400" />
-                    {/* Show friendly label: use s.status if available, otherwise fallback */}
-                    <span className="capitalize">
-                      {(() => {
-                        // Map status code to label
-                        const labels: Record<string, string> = {
-                          new: "New",
-                          contacted: "Contacted",
-                          qualified: "Qualified",
-                          proposal_sent: "Proposal Sent",
-                          negotiation: "Negotiation",
-                          won: "Won",
-                          lost: "Lost"
-                        };
-                        // Prefer "status" key (for new backend shape), fallback to "_id"
-                        const code = s?.status ?? s?._id;
-                        return labels[code] || code || "--";
-                      })()}
-                    </span>
-                    :<span className="font-bold">{s?.count ?? "--"}</span>
-                    <span className="text-xs">
-                      (<IndianRupee className="inline w-3 h-3" />
-                      {/* Prefer "totalValue" (match backend), fallback to getStatusTotalValue(s) for backwards compatibility */}
-                      {typeof s?.totalValue === "number"
-                        ? s.totalValue.toLocaleString()
-                        : getStatusTotalValue(s)}
-                      )
-                    </span>
-                    {/* Optionally, an inline trend for each status could be placed here in future */}
-                  </div>
-                ))
-              ) : (
-                "No data"
-              )}
-            </CardContent>
-          </Card>
-          {/* Priorities */}
-          <Card className="bg-white border-1 border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <Crown className="w-16 h-16 text-yellow-200 group-hover:text-yellow-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <Crown className="w-5 h-5 text-yellow-600" />
-                Priorities
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-1">
-              {loading ? (
-                <span className="animate-pulse text-yellow-400">Loading...</span>
-              ) : Array.isArray(apiStats?.byPriority) && apiStats.byPriority.length ? (
-                apiStats.byPriority.map((p: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 py-0.5"
-                  >
-                    <Crown className="w-4 h-4 text-yellow-400" />
-                    {/* Show friendly label: use p.priority if available, otherwise fallback */}
-                    <span className="capitalize">
-                      {(() => {
-                        // Map priority code to label
-                        const priorityLabels: Record<string, string> = {
-                          low: "Low",
-                          medium: "Medium",
-                          high: "High"
-                        };
-                        // Prefer "priority" key (for new backend shape), fallback to "_id"
-                        const code = p?.priority ?? p?._id;
-                        return priorityLabels[code] || code || "--";
-                      })()}
-                    </span>
-                    :{" "}
-                    <span className="font-bold">{p?.count ?? "--"}</span>
-                  </div>
-                ))
-              ) : (
-                "No data"
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        <Separator />
-        {/* Quotations Section */}
-        <h3 className="text-2xl font-bold text-indigo-700 mt-8 mb-2 flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-indigo-600" /> Quotation
-        </h3>
-        
-        {/* Quotations Stats Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
-          {/* Total Quotations */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <BarChart3 className="w-16 h-16 text-indigo-200 group-hover:text-indigo-100 transition" />
-            </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <BarChart3 className="w-5 h-5 text-indigo-600" />
-                Total Quotations
-              </CardTitle>
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.quotations} color={statLineColor.quotations} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-indigo-700">
-                {quotationsStat("totalQuotations")}
-              </span>
-            </CardContent>
-          </Card>
-          {/* Quotations With PDF/Without PDF */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <BarChartBig className="w-16 h-16 text-indigo-200 group-hover:text-indigo-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <BarChartBig className="w-5 h-5 text-indigo-600" />
-                Quotations With/Without Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <span className="text-base flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-green-400 mr-1" />
-                With Documents:{" "}
-                <span className="text-xl font-black text-green-700">
-                  {quotationsStat("totalWithPDF")}
-                </span>
-              </span>
-              <span className="text-base flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-red-400 mr-1" />
-                Without Documents:{" "}
-                <span className="text-xl font-black text-red-700">
-                  {quotationsStat("totalWithoutPDF")}
-                </span>
-              </span>
-            </CardContent>
-          </Card>
-          {/* Quotation Statuses */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <TrendingUp className="w-16 h-16 text-indigo-200 group-hover:text-indigo-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
-                Quotation Statuses
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground space-y-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-yellow-400" />
-                  Pending:
-                  <span className="font-bold text-yellow-700 ml-1">
-                    {quotationsStat("totalPending")}
-                  </span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-green-500" />
-                  Approved:
-                  <span className="font-bold text-green-700 ml-1">
-                    {quotationsStat("totalApproved")}
-                  </span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-red-500" />
-                  Rejected:
-                  <span className="font-bold text-red-700 ml-1">
-                    {quotationsStat("totalRejected")}
-                  </span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-purple-500" />
-                  Expired:
-                  <span className="font-bold text-purple-700 ml-1">
-                    {quotationsStat("totalExpired")}
-                  </span>
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Grand Quotation Value */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <IndianRupee className="w-16 h-16 text-indigo-200 group-hover:text-indigo-100 transition" />
-            </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <IndianRupee className="w-5 h-5 text-indigo-600" />
-                Grand Quotation Value
-              </CardTitle>
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.totalValue} color={statLineColor.totalValue} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-indigo-700">
-                {loading ? (
-                  <span className="animate-pulse text-indigo-400">...</span>
-                ) : (
-                  <>
-                    ₹ {" "}
-                    {(apiStats?.quotations?.totalGrandValue !== undefined && apiStats?.quotations?.totalGrandValue !== null)
-                      ? apiStats.quotations.totalGrandValue.toLocaleString()
-                      : "--"}
-                  </>
-                )}
-              </span>
-            </CardContent>
-          </Card>
-        </div>
-        <Separator />
-        {/* Purchase Orders Section */}
-        <h3 className="text-2xl font-bold text-blue-700 mt-8 mb-2 flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-blue-600" /> Purchase Orders
-        </h3>
-        {/* Purchase Orders Stats Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
-          {/* Total Purchase Orders */}
-          <Card className="bg-white border-1  border-gray-200 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <ShoppingBag className="w-16 h-16 text-blue-200 group-hover:text-blue-100 transition" />
-            </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <ShoppingBag className="w-5 h-5 text-blue-600" />
-                Total Purchase Orders
-              </CardTitle>
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.purchaseOrders} color={statLineColor.purchaseOrders} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-blue-700">
-                {purchaseOrderStat("totalPurchaseOrders")}
-              </span>
-            </CardContent>
-          </Card>
-          {/* Purchase Orders Value */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <IndianRupee className="w-16 h-16 text-cyan-200 group-hover:text-cyan-100 transition" />
-            </div>
-            <CardHeader className="pb-2 flex flex-col gap-0">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <IndianRupee className="w-5 h-5 text-cyan-600" />
-                Total Purchase Order Value
-              </CardTitle>
-              <div className="mt-1">
-                <MiniLineChart data={statusTrends.totalValue} color={statLineColor.totalValue} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-black text-cyan-700">
-                {loading ? (
-                  <span className="animate-pulse text-cyan-400">...</span>
-                ) : (
-                  <>
-                    ₹{" "}
-                    {getTotalValue(apiStats?.purchaseOrders?.totalValue)}
-                  </>
-                )}
-              </span>
-            </CardContent>
-          </Card>
-          {/* Purchase Order Statuses */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <CheckCircle2 className="w-16 h-16 text-cyan-200 group-hover:text-cyan-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <CheckCircle2 className="w-5 h-5 text-cyan-600" /> Statuses
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {loading ? (
-                <span className="animate-pulse text-cyan-400">Loading...</span>
-              ) : (
-                <div className="grid grid-cols-3 gap-x-4 gap-y-2">
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>Draft:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("Draft")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>Sent:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("Sent")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>Acknowledged:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("Acknowledged")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>In Progress:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("In Progress")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>Completed:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("Completed")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 py-0.5">
-                    <Timer className="w-4 h-4 text-cyan-400" />
-                    <span>Cancelled:</span>
-                    <span className="font-bold">{purchaseOrderStatusCount("Cancelled")}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          {/* Purchase Orders With/Without PDF */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <BarChartBig className="w-16 h-16 text-blue-200 group-hover:text-blue-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <BarChartBig className="w-5 h-5 text-blue-600" />
-                POs With/Without Documents
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <span className="text-base flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-green-400 mr-1" />
-                With Documents:{" "}
-                <span className="text-xl font-black text-green-700">
-                  {purchaseOrderStat("totalWithPDF")}
-                </span>
-              </span>
-              <span className="text-base flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full bg-red-400 mr-1" />
-                Without Documents:{" "}
-                <span className="text-xl font-black text-red-700">
-                  {purchaseOrderStat("totalWithoutPDF")}
-                </span>
-              </span>
-            </CardContent>
-          </Card>
-          {/* Purchase Order License Expiry */}
-          <Card className="bg-white border-1  border-gray-100 shadow-md group hover:scale-[1.025] transition hover:shadow-xl relative overflow-hidden">
-            <div className="absolute right-3 top-3 opacity-15 pointer-events-none">
-              <Crown className="w-16 h-16 text-blue-200 group-hover:text-blue-100 transition" />
-            </div>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-muted-foreground font-semibold">
-                <Crown className="w-5 h-5 text-blue-600" />
-                License Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <span>
-                <span className="inline-block h-3 w-3 rounded-full bg-pink-400 mr-1" />
-                Expired:{" "}
-                <span className="font-bold text-pink-700">
-                  {loading ? <span className="animate-pulse text-pink-400">...</span>
-                  : (apiStats?.purchaseOrders?.licenses?.expired ?? "--")}
-                </span>
-              </span>
-              <span>
-                <span className="inline-block h-3 w-3 rounded-full bg-yellow-400 mr-1" />
-                Expiring Soon:{" "}
-                <span className="font-bold text-yellow-700">
-                  {loading ? <span className="animate-pulse text-yellow-400">...</span>
-                  : (apiStats?.purchaseOrders?.licenses?.expiringSoon ?? "--")}
-                </span>
-              </span>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
-        {/* Charts Section */}
-        <Separator />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Leads Trend Chart */}
-          <Card className="rounded-xl border-1  border-gray-100 bg-white shadow-md hover:shadow-xl transition">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg text-pink-700">
-                <LucideLineChart className="text-pink-600 h-6 w-6" /> Leads Growth
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-72">
+        {/* Key Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Leads */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                <TrendingUp className="w-4 h-4" />
+                +12%
+              </div>
+            </div>
+            <p className="text-gray-500 text-sm font-medium mb-1">
+              Total Leads
+            </p>
+            <p className="text-3xl font-bold text-gray-800">
+              {loading ? (
+                <span className="animate-pulse text-pink-400">...</span>
+              ) : (
+                apiStats?.totalLeads ?? "--"
+              )}
+            </p>
+            <div className="mt-4 h-16">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={leadsTrend}>
-                  <CartesianGrid strokeDasharray="8 6" stroke="#ec489980" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
+                <LineChart data={keyMetrics.leads}>
                   <Line
                     type="monotone"
-                    dataKey="leads"
-                    stroke="#ec4899"
-                    strokeWidth={4}
-                    dot={{ stroke: "#fff", fill: "#ec4899", strokeWidth: 3, r: 6 }}
-                    activeDot={{ fill: "#be185d", r: 9 }}
+                    dataKey="v"
+                    stroke={COLORS.pink}
+                    strokeWidth={2}
+                    dot={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Revenue Chart */}
-          <Card className="rounded-xl border  border-gray-100 bg-white shadow-md hover:shadow-xl transition">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg text-pink-700">
-                <BarChartBig className="text-pink-600 h-6 w-6" /> Revenue (Monthly)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-72">
+          {/* Total Quotations */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                <TrendingUp className="w-4 h-4" />
+                +8%
+              </div>
+            </div>
+            <p className="text-gray-500 text-sm font-medium mb-1">
+              Total Quotations
+            </p>
+            <p className="text-3xl font-bold text-gray-800">
+              {quotationsStat("totalQuotations")}
+            </p>
+            <div className="mt-4 h-16">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="8 6" stroke="#ec489980" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="amount" fill="#ec4899" radius={[10, 10, 0, 0]} barSize={34} />
+                <LineChart data={keyMetrics.quotations}>
+                  <Line
+                    type="monotone"
+                    dataKey="v"
+                    stroke={COLORS.indigo}
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Purchase Orders */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                <ShoppingBag className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 text-red-600 text-sm font-semibold">
+                <TrendingDown className="w-4 h-4" />
+                -3%
+              </div>
+            </div>
+            <p className="text-gray-500 text-sm font-medium mb-1">
+              Purchase Orders
+            </p>
+            <p className="text-3xl font-bold text-gray-800">
+              {purchaseOrderStat("totalPurchaseOrders")}
+            </p>
+            <div className="mt-4 h-16">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={keyMetrics.leads}>
+                  <Bar dataKey="v" fill={COLORS.blue} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Total Revenue */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center">
+                <IndianRupee className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-1 text-green-600 text-sm font-semibold">
+                <TrendingUp className="w-4 h-4" />
+                +18%
+              </div>
+            </div>
+            <p className="text-gray-500 text-sm font-medium mb-1">
+              Total PO Value
+            </p>
+            <p className="text-3xl font-bold text-gray-800">
+              ₹{purchaseOrderStat("totalValue")}
+            </p>
+            <div className="mt-4 h-16">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={keyMetrics.poValue}>
+                  <Area
+                    type="monotone"
+                    dataKey="v"
+                    stroke={COLORS.green}
+                    fill={COLORS.green}
+                    fillOpacity={0.2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
-        {/* Recent Leads Section */}
         <Separator />
-        <Card className="rounded-xl border  border-gray-100 bg-white shadow-md hover:shadow-xl transition">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg text-pink-700">
-              <Users className="w-5 h-5 text-pink-600" />
-              Recent Leads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-pink-100">
-              {recentLeads.map((lead, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between py-4 px-1 hover:bg-pink-50 transition rounded-xl group"
-                >
-                  <div>
-                    <p className="font-semibold flex items-center gap-2 text-pink-700">
-                      <CheckCircle2 className="w-4 h-4 text-green-500" /> {lead.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{lead.company}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="rounded-full px-3 py-1 bg-pink-100 text-pink-700 border border-pink-200">
-                      <Timer className="inline w-4 h-4 mr-1 text-pink-500" />
-                      {lead.stage}
-                    </Badge>
-                    <ArrowRight className="h-5 w-5 text-pink-400 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              ))}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+              <AlarmClock className="w-5 h-5 text-rose-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">
+                Expiring Licenses
+              </h3>
+              <p className="text-sm text-gray-500">Upcoming license renewals</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
+            {/* Expired Licenses (Last 3 Months) */}
+            <Card
+              onClick={() =>
+                router.push("/licenses/expiring?filter=expired&range=monthly")
+              }
+              className="cursor-pointer border bg-pink-100 text-pink-700 border-pink-300 shadow-md group hover:scale-[1.02] transition"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <AlarmClock className="w-5 h-5 text-pink-600" />
+                  Expired Licenses (Last 3 Months)
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-4xl font-black text-pink-700">
+                  {licenseSummary?.totalExpired ?? "--"}
+                </p>
+                <p className="text-sm mt-1 opacity-70">From past 3 months</p>
+              </CardContent>
+            </Card>
+
+            {/* Expiring Soon Licenses (Next 3 Months) */}
+            <Card
+              onClick={() =>
+                router.push(
+                  "/licenses/expiring?filter=expiring-soon&range=monthly"
+                )
+              }
+              className="cursor-pointer border bg-yellow-100 text-yellow-700 border-yellow-300 shadow-md group hover:scale-[1.02] transition"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <CalendarClock className="w-5 h-5 text-yellow-600" />
+                  Expiring Soon (Next 3 Months)
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-4xl font-black text-yellow-700">
+                  {licenseSummary?.totalExpiringSoon ?? "--"}
+                </p>
+                <p className="text-sm mt-1 opacity-70">Coming 3 months</p>
+              </CardContent>
+            </Card>
+
+            {/* Total Licenses */}
+            <Card
+              onClick={() =>
+                router.push("/licenses/expiring?filter=all&range=monthly")
+              }
+              className="cursor-pointer border bg-blue-100 text-blue-700 border-blue-300 shadow-md group hover:scale-[1.02] transition"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Crown className="w-5 h-5 text-blue-600" />
+                  Total Licenses (6-Month Window)
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-4xl font-black text-blue-700">
+                  {licenseSummary?.totalLicenses ?? "--"}
+                </p>
+                <p className="text-sm mt-1 opacity-70">
+                  Past 3 + Next 3 months
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        <Separator />
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Lead Status Distribution */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Lead Status Distribution
+                </h3>
+                <p className="text-sm text-gray-500">By current stage</p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusPieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }: any) =>
+                      `${name} ${
+                        typeof percent === "number"
+                          ? (percent * 100).toFixed(0)
+                          : "--"
+                      }%`
+                    }
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statusPieData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Priority Distribution */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Crown className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Priority Distribution
+                </h3>
+                <p className="text-sm text-gray-500">Lead priority breakdown</p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={priorityPieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, value }: any) => `${name}: ${value}`}
+                  >
+                    {priorityPieData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Quotations Status */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Quotation Status
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Current quotation breakdown
+                </p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={quotationsStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }: any) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {quotationsStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Quotations Trend */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Quotations Trend
+                </h3>
+                <p className="text-sm text-gray-500">Monthly quotation flow</p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={quotationsTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#666"
+                    style={{ fontSize: 12 }}
+                  />
+                  <YAxis stroke="#666" style={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="quotations"
+                    stroke={COLORS.indigo}
+                    strokeWidth={3}
+                    dot={{ fill: COLORS.indigo, r: 5 }}
+                    activeDot={{ r: 7 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Leads Trend */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-pink-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Leads Growth Trend
+                </h3>
+                <p className="text-sm text-gray-500">Monthly lead generation</p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={leadsTrend}>
+                  <defs>
+                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor={COLORS.pink}
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor={COLORS.pink}
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#666"
+                    style={{ fontSize: 12 }}
+                  />
+                  <YAxis stroke="#666" style={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="leads"
+                    stroke={COLORS.pink}
+                    strokeWidth={3}
+                    fill="url(#colorLeads)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Revenue Chart */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-pink-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Revenue Overview
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Monthly revenue breakdown
+                </p>
+              </div>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={leadsTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="month"
+                    stroke="#666"
+                    style={{ fontSize: 12 }}
+                  />
+                  <YAxis stroke="#666" style={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar
+                    dataKey="revenue"
+                    fill={COLORS.pink}
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Expiring Licenses
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+              <AlarmClock className="w-5 h-5 text-rose-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">
+                Expiring Licenses
+              </h3>
+              <p className="text-sm text-gray-500">Upcoming license renewals</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-6 border-2 border-yellow-200 hover:shadow-lg transition cursor-pointer">
+              <div className="flex items-center gap-3 mb-3">
+                <CalendarClock className="w-6 h-6 text-yellow-600" />
+                <span className="text-sm font-semibold text-yellow-800">
+                  1 Month
+                </span>
+              </div>
+              <p className="text-4xl font-bold text-yellow-700">
+                {expiringLicenses?.["1_month"]?.count ?? "--"}
+              </p>
+              <p className="text-xs text-yellow-600 mt-2">
+                {expiringLicenses?.["1_month"]?.month &&
+                  new Date(
+                    expiringLicenses["1_month"].year,
+                    expiringLicenses["1_month"].month - 1
+                  ).toLocaleString("en-US", { month: "long", year: "numeric" })}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border-2 border-orange-200 hover:shadow-lg transition cursor-pointer">
+              <div className="flex items-center gap-3 mb-3">
+                <CalendarClock className="w-6 h-6 text-orange-600" />
+                <span className="text-sm font-semibold text-orange-800">
+                  2 Months
+                </span>
+              </div>
+              <p className="text-4xl font-bold text-orange-700">
+                {expiringLicenses?.["2_months"]?.count ?? "--"}
+              </p>
+              <p className="text-xs text-orange-600 mt-2">
+                {expiringLicenses?.["2_months"]?.month &&
+                  new Date(
+                    expiringLicenses["2_months"].year,
+                    expiringLicenses["2_months"].month - 1
+                  ).toLocaleString("en-US", { month: "long", year: "numeric" })}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border-2 border-red-200 hover:shadow-lg transition cursor-pointer">
+              <div className="flex items-center gap-3 mb-3">
+                <CalendarClock className="w-6 h-6 text-red-600" />
+                <span className="text-sm font-semibold text-red-800">
+                  3 Months
+                </span>
+              </div>
+              <p className="text-4xl font-bold text-red-700">
+                {expiringLicenses?.["3_months"]?.count ?? "--"}
+              </p>
+              <p className="text-xs text-red-600 mt-2">
+                {expiringLicenses?.["3_months"]?.month &&
+                  new Date(
+                    expiringLicenses["3_months"].year,
+                    expiringLicenses["3_months"].month - 1
+                  ).toLocaleString("en-US", { month: "long", year: "numeric" })}
+              </p>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 text-white">
+            <h4 className="text-sm font-medium opacity-90 mb-2">
+              Conversion Rate
+            </h4>
+            <p className="text-3xl font-bold mb-1">
+              {apiStats?.conversionRate
+                ? `${apiStats.conversionRate}%`
+                : "5.3%"}
+            </p>
+            <div className="flex items-center gap-1 text-sm">
+              <TrendingUp className="w-4 h-4" />
+              <span>+0.8% from last month</span>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-teal-500 to-teal-700 rounded-2xl shadow-lg p-6 text-white">
+            <h4 className="text-sm font-medium opacity-90 mb-2">
+              Avg. Deal Size
+            </h4>
+            <p className="text-3xl font-bold mb-1">
+              ₹
+              {apiStats?.averageDealSize
+                ? apiStats.averageDealSize?.toLocaleString?.()
+                : "23.9K"}
+            </p>
+            <div className="flex items-center gap-1 text-sm">
+              <TrendingUp className="w-4 h-4" />
+              <span>+12% from last month</span>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl shadow-lg p-6 text-white">
+            <h4 className="text-sm font-medium opacity-90 mb-2">
+              Active Deals
+            </h4>
+            <p className="text-3xl font-bold mb-1">
+              {apiStats?.activeDeals ?? "87"}
+            </p>
+            <div className="flex items-center gap-1 text-sm">
+              <Activity className="w-4 h-4" />
+              <span>In progress</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

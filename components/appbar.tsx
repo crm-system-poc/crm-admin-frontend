@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, Search, Home, Users, History, IndianRupee, ListOrdered, File } from "lucide-react";
+import { Menu, Bell, Search, Home, Users, History, IndianRupee, ListOrdered, File, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,6 +31,8 @@ export function AppBar() {
     { label: "Quotations", href: "/quotation", icon: IndianRupee },
     { label: "Purchase Orders", href: "/purchase-orders", icon: ListOrdered },
     { label: "Reports", href: "/reports", icon: File },
+    // Removed invalid 'Package' icon; use a valid icon from lucide-react instead:
+    { label: "Products", href: "/products", icon: Box },
   ];
 
   const handleLogout = async () => {
@@ -59,8 +61,8 @@ export function AppBar() {
       <div className="flex items-center h-16 px-4 gap-4">
         {/* Mobile Menu */}
         <Sheet>
-          <SheetTrigger className="md:hidden">
-            <Button variant="ghost" size="icon">
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-6 w-6 text-foreground" />
             </Button>
           </SheetTrigger>

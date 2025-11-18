@@ -58,17 +58,16 @@ const STATUS = [
   "proposal",
   "negotiation",
   "won",
+  "oem_approval",
   "lost",
 ] as const;
 const PRIORITY = ["low", "medium", "high"] as const;
-const SOURCE = ["web", "email", "phone", "referral", "other"] as const;
+const SOURCE = ["website", "referral", "social_media", "cold_call", "email", "oem", "other"] as const;
 
 export default function LeadsPage() {
   const router = useRouter();
 
-  // Dropdown keep open state for each lead action menu
-  // We force close programmatically after navigation
-  // Fix: Remove programmatic forced close here
+  
   const [openedDropdown, setOpenedDropdown] = useState<string | null>(null);
 
   // query state

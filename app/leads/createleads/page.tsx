@@ -26,6 +26,7 @@ const STATUS_LIST = [
   { label: "Proposal Sent", value: "proposal_sent" },
   { label: "Negotiation", value: "negotiation" },
   { label: "Won", value: "won" },
+  { label: "OEM Approval", value: "oem_approval" },
   { label: "Lost", value: "lost" },
 ]
 const SOURCE_LIST = [
@@ -34,6 +35,7 @@ const SOURCE_LIST = [
   { label: "Social Media", value: "social_media" },
   { label: "Cold Call", value: "cold_call" },
   { label: "Email", value: "email" },
+  { label: "OEM", value: "oem" },
   { label: "Other", value: "other" },
 ]
 const PRIORITY_LIST = [
@@ -76,6 +78,7 @@ const FormSchema = z.object({
     "proposal_sent",
     "negotiation",
     "won",
+    "oem_approval",
     "lost",
   ]),
   source: z.enum([
@@ -84,6 +87,7 @@ const FormSchema = z.object({
     "social_media",
     "cold_call",
     "email",
+    "oem",
     "other",
   ]),
   notes: z.string().optional().or(z.literal("")),
@@ -183,7 +187,7 @@ export default function CreateLead() {
 
       toast.dismiss()
       toast.success("Lead created successfully ✅")
-      // router.push("/leads") // redirect to leads list
+      router.push("/leads")
     } catch (error) {
       toast.dismiss()
       toast.error("Something went wrong ❌")
@@ -192,7 +196,7 @@ export default function CreateLead() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6 border rounded-md mt-16">
+    <div className="max-w-6xl mx-auto p-6 space-y-6 border rounded-md mt-22">
       <h1 className="text-2xl font-semibold">Create Lead</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -358,30 +362,7 @@ export default function CreateLead() {
               )}
             />
 
-            {/* STATUS: select */}
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
-                    >
-                      {STATUS_LIST.map(({ label, value }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+         
             {/* SOURCE */}
             <FormField
               control={form.control}
@@ -392,7 +373,7 @@ export default function CreateLead() {
                   <FormControl>
                     <select
                       {...field}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
                     >
                       {SOURCE_LIST.map(({ label, value }) => (
                         <option key={value} value={value}>
@@ -406,6 +387,31 @@ export default function CreateLead() {
               )}
             />
 
+               {/* STATUS: select */}
+               <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
+                    >
+                      {STATUS_LIST.map(({ label, value }) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
             {/* PRIORITY */}
             <FormField
               control={form.control}
@@ -416,7 +422,7 @@ export default function CreateLead() {
                   <FormControl>
                     <select
                       {...field}
-                      className="block w-full rounded-md border border-input bg-background px-3 py-2"
+                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
                     >
                       {PRIORITY_LIST.map(({ label, value }) => (
                         <option key={value} value={value}>

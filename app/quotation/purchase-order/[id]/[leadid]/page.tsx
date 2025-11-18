@@ -6,8 +6,16 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, Package } from "lucide-react";
 
 // Allowed license types according to backend enum
 const LICENSE_TYPES = [
@@ -19,8 +27,26 @@ const LICENSE_TYPES = [
   "other",
 ];
 
+interface Product {
+  _id?: string;
+  id?: string;
+  productId: string;
+  productName: string;
+  productCode?: string;
+  category?: string;
+  oem?: string;
+  description?: string;
+  oemPrice?: number;
+  sellingPrice?: number;
+}
+
 type Item = {
   productId: string;
+  productName: string;
+  productCode: string;
+  category: string;
+  oem: string;
+  oemPrice: string;
   description: string;
   unitPrice: string;
   quantity: string;
@@ -30,6 +56,11 @@ type Item = {
 
 const EMPTY_ITEM: Item = {
   productId: "",
+  productName: "",
+  productCode: "",
+  category: "",
+  oem: "",
+  oemPrice: "",
   description: "",
   unitPrice: "",
   quantity: "",
@@ -58,6 +89,28 @@ export default function CreatePurchaseOrder() {
   const [poPdfFile, setPoPdfFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Product-related states
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  // Fetch all products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setProductsLoading(true);
+      try {
+        const res = await api.get("/api/products?limit=1000");
+        if (res.data?.success) {
+          setProducts(res.data.data || []);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   // Fetch Quotation by ID when id param is defined
   useEffect(() => {
     async function fetchQuotation() {
@@ -73,6 +126,11 @@ export default function CreatePurchaseOrder() {
           setItems(
             data.items.map((item: any) => ({
               productId: item.productId?.toString() || "",
+              productName: item.productName || "",
+              productCode: item.productCode || "",
+              category: item.category || "",
+              oem: item.oem || "",
+              oemPrice: item.oemPrice !== undefined ? String(item.oemPrice) : "",
               description: item.description || "",
               unitPrice: item.unitPrice !== undefined ? String(item.unitPrice) : "",
               quantity: item.quantity !== undefined ? String(item.quantity) : "",
@@ -98,6 +156,161 @@ export default function CreatePurchaseOrder() {
     fetchQuotation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quotationIdParam]);
+
+  // Fetch product details by ID
+  const fetchProductDetails = async (productId: string, itemIdx: number) => {
+    try {
+      // Try to find product in the already fetched list first
+      const product = products.find(
+        (p) => 
+          p.productId === productId || 
+          p._id === productId || 
+          p.id === productId ||
+          (p._id && p._id.toString() === productId) ||
+          (p.id && p.id.toString() === productId)
+      );
+
+      if (product) {
+        // Update the item with product details
+        setItems((prevItems) =>
+          prevItems.map((it, i) =>
+            i === itemIdx
+              ? {
+                  ...it,
+                  productId: product.productId || productId,
+                  productName: product.productName || "",
+                  productCode: product.productCode || "",
+                  category: product.category || "",
+                  oem: product.oem || "",
+                  oemPrice: product.oemPrice?.toString() || "",
+                  description: product.description || product.productName || "",
+                  unitPrice: product.sellingPrice?.toString() || "",
+                }
+              : it
+          )
+        );
+      } else {
+        // If not found, try to fetch by MongoDB _id from API
+        try {
+          const res = await api.get(`/api/products/${productId}`);
+          if (res.data?.success && res.data.data) {
+            const fetchedProduct = res.data.data;
+            setItems((prevItems) =>
+              prevItems.map((it, i) =>
+                i === itemIdx
+                  ? {
+                      ...it,
+                      productId: fetchedProduct.productId || productId,
+                      productName: fetchedProduct.productName || "",
+                      productCode: fetchedProduct.productCode || "",
+                      category: fetchedProduct.category || "",
+                      oem: fetchedProduct.oem || "",
+                      oemPrice: fetchedProduct.oemPrice?.toString() || "",
+                      description: fetchedProduct.description || fetchedProduct.productName || "",
+                      unitPrice: fetchedProduct.sellingPrice?.toString() || "",
+                    }
+                  : it
+              )
+            );
+          }
+        } catch (fetchErr) {
+          console.warn("Could not fetch product by ID:", productId);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error fetching product details:", err);
+    }
+  };
+
+  // Get product value for Select component
+  const getProductSelectValue = (productId: string): string => {
+    if (!productId) return "";
+    const product = products.find(
+      (p) =>
+        p.productId === productId ||
+        p._id === productId ||
+        p.id === productId ||
+        (p._id && p._id.toString() === productId) ||
+        (p.id && p.id.toString() === productId)
+    );
+    if (!product) return productId;
+    return product.productId || product._id || product.id || productId;
+  };
+
+  // Check if product is already selected in another item
+  const isProductAlreadySelected = (productId: string, currentItemIdx: number): boolean => {
+    if (!productId) return false;
+    
+    const currentProduct = products.find(
+      (p) =>
+        p.productId === productId ||
+        p._id === productId ||
+        p.id === productId ||
+        (p._id && p._id.toString() === productId) ||
+        (p.id && p.id.toString() === productId)
+    );
+    
+    return items.some((item, idx) => {
+      if (idx === currentItemIdx) return false;
+      if (!item.productId) return false;
+      
+      if (item.productId === productId) return true;
+      
+      if (currentProduct) {
+        const existingProduct = products.find(
+          (p) =>
+            p.productId === item.productId ||
+            p._id === item.productId ||
+            p.id === item.productId ||
+            (p._id && p._id.toString() === item.productId) ||
+            (p.id && p.id.toString() === item.productId)
+        );
+        
+        if (existingProduct && currentProduct) {
+          if (currentProduct.productId && existingProduct.productId) {
+            return currentProduct.productId === existingProduct.productId;
+          }
+          return (
+            currentProduct._id === existingProduct._id ||
+            currentProduct.id === existingProduct.id
+          );
+        }
+      }
+      
+      return false;
+    });
+  };
+
+  // Handle product selection
+  const handleProductSelect = (value: string, itemIdx: number) => {
+    if (!value) {
+      handleItemChange(itemIdx, "productId", "");
+      return;
+    }
+
+    const selectedProduct = products.find(
+      (p) =>
+        p.productId === value ||
+        p._id === value ||
+        p.id === value ||
+        (p._id && p._id.toString() === value) ||
+        (p.id && p.id.toString() === value)
+    );
+
+    const actualProductId = selectedProduct?.productId || value;
+    
+    // Check if this product is already selected in another item
+    if (isProductAlreadySelected(actualProductId, itemIdx)) {
+      toast.error("Cannot select similar product. This product has already been selected in another item.");
+      return;
+    }
+    
+    handleItemChange(itemIdx, "productId", actualProductId);
+    
+    if (value) {
+      fetchProductDetails(value, itemIdx);
+    }
+  };
 
   // Update item field
   const handleItemChange = (
@@ -142,6 +355,20 @@ export default function CreatePurchaseOrder() {
         error: "At least one item is required for the Purchase Order.",
       };
     }
+
+    // Check for duplicate products
+    const productIds = items
+      .map((item) => item.productId?.trim())
+      .filter((id) => id);
+    
+    const uniqueProductIds = new Set(productIds);
+    if (productIds.length !== uniqueProductIds.size) {
+      return {
+        valid: false,
+        error: "Cannot select similar product. Each product can only be selected once.",
+      };
+    }
+
     for (const [idx, item] of items.entries()) {
       // productId, licenseType, description, unitPrice, quantity are required
       if (
@@ -322,17 +549,29 @@ export default function CreatePurchaseOrder() {
       ) : (
         <>
           <div>
-            <div className="flex items-center mb-2">
+            <div className="flex items-center justify-between mb-2">
               <span className="font-semibold">Product Items</span>
-              <Button
-                type="button"
-                size="sm"
-                onClick={addItem}
-                className="ml-auto px-3 py-1"
-                variant="outline"
-              >
-                + Add Item
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => router.push("/products/add")}
+                >
+                  <Package className="w-4 h-4" />
+                  Add New Product
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={addItem}
+                  className="px-3 py-1"
+                  variant="outline"
+                >
+                  + Add Item
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-6">
               {items.map((item, idx) => {
@@ -357,24 +596,111 @@ export default function CreatePurchaseOrder() {
                         <Trash2 size={20} strokeWidth={2} aria-label="Remove" />
                       </button>
                     </div>
+                    {/* Product Details Display */}
+                    {(item.productName || item.productCode || item.category || item.oem || item.oemPrice) && (
+                      <div className="mb-3 p-3 bg-muted/50 rounded-md border">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          {item.productName && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Product Name:</span>
+                              <p className="font-semibold">{item.productName}</p>
+                            </div>
+                          )}
+                          {item.productCode && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Product Code:</span>
+                              <p className="font-semibold">{item.productCode}</p>
+                            </div>
+                          )}
+                          {item.category && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Category:</span>
+                              <p className="font-semibold">{item.category}</p>
+                            </div>
+                          )}
+                          {item.oem && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">OEM:</span>
+                              <p className="font-semibold">{item.oem}</p>
+                            </div>
+                          )}
+                          {item.oemPrice && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">OEM Price:</span>
+                              <p className="font-semibold">
+                                ₹{Number(item.oemPrice).toLocaleString("en-IN")}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
-                        <label
+                        <Label
                           className="font-semibold text-sm mb-1 block"
                           htmlFor={`productId-${idx}`}
                         >
-                          Product ID
-                        </label>
-                        <Input
-                          id={`productId-${idx}`}
-                          placeholder="Product ID"
-                          value={item.productId}
-                          onChange={(e) =>
-                            handleItemChange(idx, "productId", e.target.value)
-                          }
-                          required
-                          name={`items.${idx}.productId`}
-                        />
+                          Product
+                        </Label>
+                        <Select
+                          value={getProductSelectValue(item.productId)}
+                          onValueChange={(value) => handleProductSelect(value, idx)}
+                        >
+                          <SelectTrigger id={`productId-${idx}`} className="w-full">
+                            <SelectValue placeholder={productsLoading ? "Loading..." : "Select a product"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productsLoading ? (
+                              <SelectItem value="loading" disabled>
+                                Loading products...
+                              </SelectItem>
+                            ) : products.length === 0 ? (
+                              <SelectItem value="no-products" disabled>
+                                No products available
+                              </SelectItem>
+                            ) : (
+                              products.map((product) => {
+                                const productValue = product.productId || product._id || product.id || "";
+                                const isDisabled = items.some((item, itemIdx) => {
+                                  if (itemIdx === idx || !item.productId) return false;
+                                  
+                                  const existingProduct = products.find(
+                                    (p) =>
+                                      p.productId === item.productId ||
+                                      p._id === item.productId ||
+                                      p.id === item.productId ||
+                                      (p._id && p._id.toString() === item.productId) ||
+                                      (p.id && p.id.toString() === item.productId)
+                                  );
+                                  
+                                  if (existingProduct && product) {
+                                    if (existingProduct.productId && product.productId) {
+                                      return existingProduct.productId === product.productId;
+                                    }
+                                    return (
+                                      existingProduct._id === product._id ||
+                                      existingProduct.id === product.id
+                                    );
+                                  }
+                                  return false;
+                                });
+                                
+                                return (
+                                  <SelectItem
+                                    key={product._id || product.id || product.productId}
+                                    value={productValue}
+                                    disabled={isDisabled}
+                                  >
+                                    {product.productName} ({product.productCode || product.productId})
+                                    {isDisabled && " (Already selected)"}
+                                  </SelectItem>
+                                );
+                              })
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="flex flex-col gap-1">
                         <label

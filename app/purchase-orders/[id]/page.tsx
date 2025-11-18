@@ -36,6 +36,7 @@ function formatDate(dateStr?: string) {
 
 export default function PurchaseOrderDetail() {
   const { id } = useParams();
+  const [mounted, setMounted] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [status, setStatus] = useState<string>("");
 
@@ -67,6 +68,10 @@ export default function PurchaseOrderDetail() {
     pdfUrl: "",
     pdfName: "",
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -140,7 +145,7 @@ export default function PurchaseOrderDetail() {
     });
   };
 
-  if (!order) return <p className="p-6">Loading...</p>;
+  if (!mounted || !order) return <p className="p-6">Loading...</p>;
 
   return (
     <div className="p-6  space-y-8">
@@ -223,7 +228,7 @@ export default function PurchaseOrderDetail() {
             </div>
           </div>
 
-          {/* Lead & Quotation */}
+          {/* Lead & Quotation
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-medium mb-1">Lead</h3>
@@ -342,7 +347,7 @@ export default function PurchaseOrderDetail() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* PO PDF */}
           <div>
@@ -368,11 +373,12 @@ export default function PurchaseOrderDetail() {
           </div>
 
           {/* Items Table */}
-          <div>
+          <div className="shadow-sm p-4 border rounded-md">
             <h2 className="font-semibold mb-2 text-lg">Items</h2>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No.</TableHead>
                   <TableHead>Product ID</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Quantity</TableHead>
@@ -383,8 +389,9 @@ export default function PurchaseOrderDetail() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(order.items || []).map((item: any) => (
+                {(order.items || []).map((item: any, index: number) => (
                   <TableRow key={item._id || item.productId}>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.productId}</TableCell>
                     <TableCell>{item.description}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
