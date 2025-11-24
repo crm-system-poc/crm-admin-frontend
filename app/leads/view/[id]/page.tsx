@@ -28,7 +28,7 @@ export default function ViewQuotation() {
   const router = useRouter();
   const params = useParams();
   const leadId = params.id; 
-  console.log("Lead ID:", leadId);
+  // console.log("Lead ID:", leadId);
 
   
   const [quotations, setQuotations] = useState<any[]>([]);
@@ -70,7 +70,7 @@ export default function ViewQuotation() {
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
-        <Button onClick={() => router.push("/quotation/create")}>Create Quotation</Button>
+       
       </div>
 
 
@@ -97,7 +97,7 @@ export default function ViewQuotation() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead>Quote #</TableHead>
+              <TableHead>Quotation</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Value</TableHead>

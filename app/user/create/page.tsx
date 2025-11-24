@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, UseFormSetValue, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import axios from "axios";
 import { useState } from "react";
@@ -20,7 +20,9 @@ const modules = [
   { key: "manageLeads", label: "Leads", actionKey: "leadsActions" },
   { key: "manageQuotation", label: "Quotation", actionKey: "quotationActions" },
   { key: "managePurchaseOrder", label: "Purchase Order", actionKey: "purchaseOrderActions" },
-  { key: "manageReport", label: "Report", actionKey: "reportActions" }
+  { key: "manageReport", label: "Report", actionKey: "reportActions" },
+  { key: "managePlatformUsers", label: "Platform User", actionKey: "platformUserActions" },
+  { key: "manageProducts", label: "Products", actionKey: "productsActions" },
 ];
 
 const CRUDActionsTemplate = {
@@ -34,27 +36,53 @@ export default function CreateUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, control, watch } = useForm({
+  const { register, handleSubmit, control, watch, setValue, getValues } = useForm({
     defaultValues: {
       name: "",
       email: "",
-      mobile: "",
+      phone: "",
       password: "",
       permissions: {
         manageHome: false,
         manageLeads: false,
         manageQuotation: false,
         managePurchaseOrder: false,
+        managePlatformUsers:false,
         manageReport: false,
+        manageProducts:false,
         leadsActions: { ...CRUDActionsTemplate },
         quotationActions: { ...CRUDActionsTemplate },
         purchaseOrderActions: { ...CRUDActionsTemplate },
         reportActions: { ...CRUDActionsTemplate },
+        platformUserActions:{ ...CRUDActionsTemplate },
+        productsActions:{ ...CRUDActionsTemplate },
       },
     },
   });
 
   const watchedPermissions = watch("permissions");
+
+  // Helper: when module is checked, set read=true in actions and disable unchecking
+  const handleModuleToggle = (mod: typeof modules[number], value: boolean) => {
+    setValue(`permissions.${mod.key}`, value);
+    if (mod.actionKey) {
+      // Always enable read when module is toggled on
+      setValue(`permissions.${mod.actionKey}.read`, value, { shouldDirty: true, shouldTouch: true });
+    }
+  };
+
+  // Fix unchecking read if module is checked
+  const handleReadActionChange = (
+    mod: typeof modules[number],
+    checked: boolean
+  ) => {
+    // Only allow unchecking Read if the module itself is also unchecked
+    if (mod.actionKey && watchedPermissions[mod.key]) {
+      // ignore manual unchecking if module checked
+      return;
+    }
+    setValue(`permissions.${mod.actionKey}.read`, checked, { shouldDirty: true, shouldTouch: true });
+  };
 
   const onSubmit = async (data: any) => {
     try {
@@ -66,7 +94,7 @@ export default function CreateUserPage() {
       );
 
       toast.success("User created successfully!");
-      router.push("/admin/users");
+      router.push("/user");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create user");
     } finally {
@@ -104,7 +132,7 @@ export default function CreateUserPage() {
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     id="name"
-                    placeholder="John Doe" 
+                    placeholder="Enter Name" 
                     className="pl-10"
                     {...register("name")} 
                     required 
@@ -119,7 +147,7 @@ export default function CreateUserPage() {
                   <Input 
                     id="email"
                     type="email" 
-                    placeholder="john@example.com" 
+                    placeholder="abc@example.com" 
                     className="pl-10"
                     {...register("email")} 
                     required 
@@ -128,14 +156,14 @@ export default function CreateUserPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    id="mobile"
-                    placeholder="+1 (555) 000-0000" 
+                    id="phone"
+                    placeholder="123456890" 
                     className="pl-10"
-                    {...register("mobile")} 
+                    {...register("phone")} 
                     required 
                   />
                 </div>
@@ -185,7 +213,13 @@ export default function CreateUserPage() {
                           <Checkbox
                             id={mod.key}
                             checked={field.value}
-                            onCheckedChange={field.onChange}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              // We need to tick read=true/false for the module's actionKey
+                              if (mod.actionKey) {
+                                setValue(`permissions.${mod.actionKey}.read`, checked, { shouldDirty: true, shouldTouch: true });
+                              }
+                            }}
                           />
                         )}
                       />
@@ -209,21 +243,45 @@ export default function CreateUserPage() {
                               key={action}
                               name={`permissions.${mod.actionKey}.${action}`}
                               control={control}
-                              render={({ field }) => (
-                                <div className="flex items-center gap-2">
-                                  <Checkbox
-                                    id={`${mod.actionKey}-${action}`}
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                  />
-                                  <Label 
-                                    htmlFor={`${mod.actionKey}-${action}`}
-                                    className="text-sm font-normal cursor-pointer capitalize"
-                                  >
-                                    {action}
-                                  </Label>
-                                </div>
-                              )}
+                              render={({ field }) => {
+                                // For read: always checked and disabled if module is checked
+                                if (action === "read") {
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Checkbox
+                                        id={`${mod.actionKey}-${action}`}
+                                        checked={true}
+                                        disabled={watchedPermissions[mod.key]}
+                                        onCheckedChange={() => {
+                                          handleReadActionChange(mod, !watchedPermissions[mod.actionKey]?.read);
+                                        }}
+                                      />
+                                      <Label 
+                                        htmlFor={`${mod.actionKey}-${action}`}
+                                        className="text-sm font-normal cursor-pointer capitalize"
+                                      >
+                                        {action}
+                                      </Label>
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Checkbox
+                                        id={`${mod.actionKey}-${action}`}
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                      <Label 
+                                        htmlFor={`${mod.actionKey}-${action}`}
+                                        className="text-sm font-normal cursor-pointer capitalize"
+                                      >
+                                        {action}
+                                      </Label>
+                                    </div>
+                                  );
+                                }
+                              }}
                             />
                           ))}
                         </div>

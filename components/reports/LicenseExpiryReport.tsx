@@ -71,8 +71,8 @@ export default function LicenseExpiryReport({ isLoading }: LicenseExpiryReportPr
       );
       console.log(response.data)
       setLicenseExpiryData(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch license expiry data:", error);
+    } catch (error:unknown) {
+      console.error("Failed to fetch license expiry data:", error.response?.data?.message);
     }
   };
 

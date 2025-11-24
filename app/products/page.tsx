@@ -34,11 +34,15 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export default function ProductsPage() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
 
   // Filters
   const [search, setSearch] = useState("");
@@ -248,6 +252,7 @@ export default function ProductsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Products
         </h1>
+        {hasAction(user.permissions, "manageProducts", "create") && (
         <Button
           className="gap-2 bg-pink-600 hover:bg-pink-700 rounded-lg shadow"
           size="sm"
@@ -255,17 +260,18 @@ export default function ProductsPage() {
         >
           <Plus size={18} /> Add Product
         </Button>
+        )}
       </div>
       <Separator />
 
       {/* Filter Row */}
       <div className="flex flex-col md:flex-row md:gap-4 gap-2 items-stretch md:items-end mb-3">
         <div className="w-full md:max-w-xs">
-          <label htmlFor="search" className="block text-xs mb-1 pl-0.5 text-gray-700">Search</label>
+          <label htmlFor="search" className="block text-sm mb-1 pl-0.5 text-gray-700">Search</label>
           <input
             id="search"
             type="search"
-            className="block w-full border rounded-md py-2 px-3 text-base focus:outline-none focus:ring-2 focus:ring-pink-400"
+            className="block w-full border rounded-md py-2 px-2 text-base focus:outline-none focus:ring-2 focus:ring-pink-400"
             value={search}
             placeholder="Name, Code, ID, Description…"
             onChange={e => {
@@ -275,10 +281,10 @@ export default function ProductsPage() {
           />
         </div>
         <div className="w-full md:max-w-xs flex flex-col">
-          <label htmlFor="category" className="text-xs mb-1 text-gray-700">Category</label>
+          <label htmlFor="category" className="text-sm mb-1 text-gray-700">Category</label>
           <select
             id="category"
-            className="border rounded-md py-2 px-3 text-base"
+            className="border rounded-md py-2 px-2 text-base"
             value={category}
             onChange={e => {
               setPage(1);
@@ -292,10 +298,10 @@ export default function ProductsPage() {
           </select>
         </div>
         <div className="w-full md:max-w-xs flex flex-col">
-          <label htmlFor="oem" className="text-xs mb-1 text-gray-700">OEM</label>
+          <label htmlFor="oem" className="text-sm mb-1 text-gray-700">OEM</label>
           <select
             id="oem"
-            className="border rounded-md py-2 px-3 text-base"
+            className="border rounded-md py-2 px-2 text-base"
             value={oem}
             onChange={e => {
               setPage(1);
@@ -355,7 +361,7 @@ export default function ProductsPage() {
                   <TableCell>{renderPrice(product.sellingPrice)}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center">
-                      {/* EDIT BUTTON WITH PROPER HANDLER */}
+                    {hasAction(user.permissions, "manageProducts", "update") && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -365,7 +371,9 @@ export default function ProductsPage() {
                         <Pencil className="h-6 w-6 text-blue-500" />
                         <span className="sr-only">Edit</span>
                       </Button>
+                    )}
                       {/* DELETE BUTTON OPENS DIALOG */}
+                      {hasAction(user.permissions, "manageProducts", "delete") && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -379,6 +387,7 @@ export default function ProductsPage() {
                         <Trash2 className="h-6 w-6 text-red-600" />
                         <span className="sr-only">Delete</span>
                       </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

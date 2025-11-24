@@ -21,6 +21,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 // Simple AlertDialog
 function ConfirmDialog({ open, onConfirm, onCancel, title, description }: any) {
@@ -118,6 +120,9 @@ type PurchaseOrder = {
 
 export default function PurchaseOrderList() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
+
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -204,25 +209,26 @@ export default function PurchaseOrderList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                      {hasAction(user.permissions, "managePurchaseOrder", "read") && (
                         <DropdownMenuItem
                           onClick={() => router.push(`/purchase-orders/${po.id}`)}
                         >
-                          View
+                          View Details
                         </DropdownMenuItem>
-                        {po.poPdf?.s3Url && (
-                          <DropdownMenuItem
-                            asChild
+                      )}
+                       {hasAction(user.permissions, "managePurchaseOrder", "read") && po.poPdf?.s3Url && (
+                        <DropdownMenuItem asChild>
+                          <a
+                            href={po.poPdf.s3Url}
+                            target="_blank"
+                            rel="noopener noreferrer"
                           >
-                            <a
-                              href={po.poPdf.s3Url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              PDF
-                            </a>
-                          </DropdownMenuItem>
-                        )}
+                            View PDF
+                          </a>
+                        </DropdownMenuItem>
+                      )}
                         <DropdownMenuSeparator />
+                        {hasAction(user.permissions, "managePurchaseOrder", "delete") && (
                         <DropdownMenuItem
                           onClick={() => handleDelete(po.id)}
                           disabled={deleting && deleteId === po.id}
@@ -230,6 +236,7 @@ export default function PurchaseOrderList() {
                         >
                           Delete
                         </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

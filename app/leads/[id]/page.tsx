@@ -107,7 +107,7 @@ export default function LeadDetailsPage() {
         });
       })
       .catch((e) => {
-        toast.error("Failed to load lead");
+        toast.error(e?.message || "Failed to load lead");
         setLead(null);
       })
       .finally(() => setLoading(false));
@@ -221,9 +221,13 @@ export default function LeadDetailsPage() {
       toast.dismiss();
       toast.success("Lead updated");
       router.refresh?.();
-    } catch (e) {
+    } catch (e: any) {
       toast.dismiss();
-      toast.error("Failed to update lead");
+      toast.error(
+        (typeof e === "string" && e) ||
+        (e && typeof e.message === "string" && e.message) ||
+        "Failed to update lead"
+      );
     }
     setSaving(false);
   };

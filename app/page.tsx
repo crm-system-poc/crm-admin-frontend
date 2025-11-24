@@ -181,7 +181,7 @@ export default function Home() {
           setError("Failed to load data");
         }
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
+        setError(err.response?.data?.message|| "Something went wrong");
       } finally {
         setLoading(false);
       }
@@ -202,7 +202,7 @@ export default function Home() {
           setLicenseSummary(json.data.summary);
         }
       } catch (e) {
-        console.error("Error fetching license summary:", e);
+        console.error("Error fetching license summary:", e.response?.data?.message);
       }
     };
     fetchLicenseSummary();

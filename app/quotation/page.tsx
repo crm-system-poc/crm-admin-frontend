@@ -26,6 +26,8 @@ import {
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { MoreVertical } from "lucide-react";
 import { toast } from "sonner";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 const STATUS_OPTIONS = [
   "draft",
@@ -46,6 +48,8 @@ const statusColorMap: Record<string, string> = {
 
 export default function QuotationList() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
 
   // State for data, filters, and pagination
   const [quotations, setQuotations] = useState<any[]>([]);
@@ -95,15 +99,15 @@ export default function QuotationList() {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [page, status, customerName]);
 
   useEffect(() => {
     setPage(1);
-    // eslint-disable-next-line
+
   }, [status, customerName]);
 
-  // Delete Handler
+
   const handleDelete = async (id: string) => {
     setDeleteLoading(true);
     try {
@@ -139,7 +143,6 @@ export default function QuotationList() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
-        {/* <Button onClick={() => router.push("/quotation/create")}>Create Quotation</Button> */}
       </div>
 
       <div className="flex flex-wrap gap-4 items-end mb-4">
@@ -269,6 +272,7 @@ export default function QuotationList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                      {hasAction(user.permissions, "manageQuotation", "read") && (
                         <DropdownMenuItem
                           onSelect={e => {
                             e.preventDefault();
@@ -277,6 +281,8 @@ export default function QuotationList() {
                         >
                           View Detail
                         </DropdownMenuItem>
+                      )}
+                       {hasAction(user.permissions, "managePurchaseOrder", "create") && (
                         <DropdownMenuItem
                           onSelect={e => {
                             e.preventDefault();
@@ -285,16 +291,20 @@ export default function QuotationList() {
                         >
                           Create Purchase Order
                         </DropdownMenuItem>
+                       )}
                         <DropdownMenuSeparator />
                         <AlertDialog open={deleteId === q.id} onOpenChange={(open) => {if (!open) setDeleteId(null); }}>
                           <AlertDialogTrigger asChild>
+                          {hasAction(user.permissions, "manageQuotation", "delete") && (
                             <DropdownMenuItem onSelect={e => {
                               e.preventDefault();
                               setOpenDropdownId(null); // make sure dropdown closes on delete prompt
                               setDeleteId(q.id);
+                               
                             }}>
                               Delete
                             </DropdownMenuItem>
+                          )}
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

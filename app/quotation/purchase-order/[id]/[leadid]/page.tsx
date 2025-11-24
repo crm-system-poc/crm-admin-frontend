@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Package } from "lucide-react";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 // Allowed license types according to backend enum
 const LICENSE_TYPES = [
@@ -73,6 +75,8 @@ export default function CreatePurchaseOrder() {
   const params = useParams();
   const leadIdParam = (params?.leadid as string) || "";
   const quotationIdParam = (params?.id as string) || "";
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
 
   // New: store quotation data
   const [quotationData, setQuotationData] = useState<any>(null);
@@ -556,16 +560,19 @@ export default function CreatePurchaseOrder() {
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold">Product Items</span>
               <div className="flex gap-2">
+              {hasAction(user.permissions, "manageProducts", "create") && (
                 <Button 
                   type="button" 
                   size="sm" 
-                  variant="outline" 
-                  className="flex items-center gap-2"
+                  variant="ghost" 
+                  className="flex items-center gap-2 bg-pink-700 text-white"
                   onClick={() => router.push("/products/add")}
                 >
                   <Package className="w-4 h-4" />
-                  Add New Product
+                  Add Master Products
                 </Button>
+              )}
+                {hasAction(user.permissions, "managePurchaseOrder", "create") && (
                 <Button
                   type="button"
                   size="sm"
@@ -575,6 +582,7 @@ export default function CreatePurchaseOrder() {
                 >
                   + Add Item
                 </Button>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 gap-6">
@@ -587,6 +595,7 @@ export default function CreatePurchaseOrder() {
                   >
                     <div className="absolute top-3 right-3">
                       {/* Replace Remove button with Trash2 Lucide icon */}
+                      {hasAction(user.permissions, "managePurchaseOrder", "create") && (
                       <button
                         type="button"
                         onClick={() => removeItem(idx)}
@@ -599,6 +608,7 @@ export default function CreatePurchaseOrder() {
                       >
                         <Trash2 size={20} strokeWidth={2} aria-label="Remove" />
                       </button>
+                      )}
                     </div>
                     {/* Product Details Display */}
                     {(item.productName || item.productCode || item.category || item.oem || item.oemPrice) && (
@@ -893,6 +903,7 @@ export default function CreatePurchaseOrder() {
           </div>
 
           <div className="mt-6 flex justify-center">
+          {hasAction(user.permissions, "managePurchaseOrder", "create") && (
             <Button
               onClick={submitPurchaseOrder}
               disabled={loading}
@@ -901,6 +912,7 @@ export default function CreatePurchaseOrder() {
             >
               {loading ? "Creating..." : "Create"}
             </Button>
+          )}
           </div>
         </>
       )}

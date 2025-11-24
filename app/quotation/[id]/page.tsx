@@ -15,6 +15,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 type Quotation = {
   id: string;
@@ -76,6 +78,8 @@ export default function QuotationDetail() {
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
 
   const fetchDetails = async () => {
     try {
@@ -96,7 +100,7 @@ export default function QuotationDetail() {
         setError("Unable to load this quotation.");
       }
     } catch (err: any) {
-      setError("Failed to fetch quotation details.");
+      setError("Failed to fetch quotation details."|| err.response?.data?.message);
       setQuotation(null);
       setStatus("");
     }
@@ -109,13 +113,12 @@ export default function QuotationDetail() {
       toast.success("Status Updated ✅");
       fetchDetails();
     } catch (e) {
-      toast.error("Could not update status.");
+      toast.error("Could not update status."|| e.response?.data?.message);
     }
   };
 
   useEffect(() => {
     fetchDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) {
@@ -124,7 +127,6 @@ export default function QuotationDetail() {
 
   if (!quotation) return <p className="p-6">Loading...</p>;
 
-  // Helper rendering
   const cust = quotation.customerDetails || {};
   const pdf = quotation.pdfFile || {};
   const addr = cust.address || {};
@@ -204,9 +206,11 @@ export default function QuotationDetail() {
                 </SelectContent>
               </Select>
             </div>
+            {hasAction(user.permissions, "manageQuotation", "update") && (
             <Button className="mt-2 max-w-30" onClick={updateStatus}>
               Update Status
             </Button>
+            )}
           </div>
 
           {/* Quote items table */}

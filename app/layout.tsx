@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner"
+import { Toaster } from "sonner";
 import "./globals.css";
-import { AppBar } from "@/components/appbar";
 import { AppBarWrapper } from "@/components/appbar-wrapper";
+import { AuthProvider } from "@/components/context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,17 +22,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased` }
-      >
-        <AppBarWrapper />
-       <div className="mt-16"> {children}</div>
-        <Toaster richColors position="top-center" /> {/* ← THIS IS REQUIRED */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          <AppBarWrapper />
+          <div className="mt-16">{children}</div>
+        </AuthProvider>
+        
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { hasModule, hasAction } from "@/lib/permissions";
+import { useAuth } from "@/components/context/AuthContext";
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return "-";
@@ -39,6 +41,8 @@ export default function PurchaseOrderDetail() {
   const [mounted, setMounted] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [status, setStatus] = useState<string>("");
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
 
   const [customerDetails, setCustomerDetails] = useState<any>({
     customerName: "",
@@ -208,7 +212,7 @@ export default function PurchaseOrderDetail() {
                   className="font-semibold"
                 />
               </div>
-              <div className="flex items-center gap-4 mt-4">
+              <div className="flex items-center gap-4 mt-5">
               {/* <Badge className="capitalize px-6 py-1">{order.status}</Badge> */}
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="w-40">
@@ -223,7 +227,11 @@ export default function PurchaseOrderDetail() {
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
+              <>
+              {hasAction(user.permissions, "managePurchaseOrder", "update") && (
               <Button onClick={updateStatus} size="sm">Update Status</Button>
+              )}
+              </>
             </div>
             </div>
           </div>

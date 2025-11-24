@@ -88,7 +88,7 @@ export const useReports = () => {
       });
       setDashboardData(response.data.data);
     } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
+      console.error("Failed to fetch dashboard data:", error.response?.data?.message);
     }
   };
 

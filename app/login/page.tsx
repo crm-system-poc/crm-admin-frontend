@@ -30,6 +30,7 @@ import { useState } from "react";
 
 // You may need to import your Eye/EyeOff icons depending on your project setup
 import { Eye, EyeOff } from "lucide-react"; // adjust if using a different icon set
+import { useAuth } from "@/components/context/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -38,6 +39,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
 
   // Add showPassword state
   const [showPassword, setShowPassword] = useState(false);
@@ -47,47 +49,43 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async (data: any) => {
-    toast.loading("Logging in...");
-    try {
-      const response = await api.post(
-        "/api/admin/login",
-        {
-          email: data.email,
-          password: data.password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+  
 
-      toast.dismiss();
-      toast.success("Login Successful");
-
-      // Store admin name in localStorage after login
-      if (
-        response.data &&
-        response.data.data &&
-        response.data.data.admin &&
-        response.data.data.admin.name
-      ) {
-        localStorage.setItem("adminName", response.data.data.admin.name);
+const onSubmit = async (data: any) => {
+  toast.loading("Logging in...");
+  try {
+    const response = await api.post(
+      "/api/admin/login",
+      {
+        email: data.email,
+        password: data.password,
+      },
+      {
+        withCredentials: true,
       }
+    );
 
-      router.push("/");
-    } catch (error: any) {
-      toast.dismiss();
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Invalid email or password");
-      }
+    toast.dismiss();
+    toast.success("Login Successful");
+
+    const adminData = response?.data?.data?.admin;
+    
+    if (adminData?.name) {
+      localStorage.setItem("adminName", adminData.name);
     }
-  };
+
+    // ⬇ Save full admin including permissions to context
+    login(adminData);
+
+    router.push("/");
+  } catch (error: any) {
+    toast.dismiss();
+    toast.error(
+      error?.response?.data?.message || "Invalid email or password"
+    );
+  }
+};
+
 
   return (
     <div className="fixed inset-0 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
