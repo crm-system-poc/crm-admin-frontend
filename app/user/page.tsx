@@ -122,7 +122,7 @@ export default function GetAllUserPage() {
       user.name?.toLowerCase().includes(query) ||
       user.email?.toLowerCase().includes(query) ||
       user.phone?.toLowerCase().includes(query) ||
-      user.role?.toLowerCase().includes(query)
+      user.systemrole?.toLowerCase().includes(query)
     );
   });
 
@@ -139,7 +139,7 @@ export default function GetAllUserPage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-muted-foreground">
-            Manage your CRM users, roles, and permissions
+            Manage your CRM users, systemroles, and permissions
           </p>
         </div>
         {hasAction(user?.permissions, "managePlatformUsers", "create") && (
@@ -250,7 +250,7 @@ export default function GetAllUserPage() {
                     <TableHead className="font-semibold">User</TableHead>
                     <TableHead className="font-semibold">Email</TableHead>
                     <TableHead className="font-semibold">Contact</TableHead>
-                    <TableHead className="font-semibold">Role</TableHead>
+                    <TableHead className="font-semibold">systemrole</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="w-[80px] text-right font-semibold">Actions</TableHead>
                   </TableRow>
@@ -280,7 +280,7 @@ export default function GetAllUserPage() {
                         <TableCell>
                           <Badge variant="outline" className="gap-1">
                             <Shield className="h-3 w-3" />
-                            {user.role || "-"}
+                            {user.systemrole || "-"}
                           </Badge>
                         </TableCell>
                         <TableCell>

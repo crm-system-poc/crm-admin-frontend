@@ -1,9 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm, Controller, UseFormSetValue, useWatch } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
-import axios from "axios";
 import { useState } from "react";
 import { User, Mail, Phone, Lock, Shield } from "lucide-react";
 
@@ -13,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 
 const modules = [
@@ -23,6 +23,15 @@ const modules = [
   { key: "manageReport", label: "Report", actionKey: "reportActions" },
   { key: "managePlatformUsers", label: "Platform User", actionKey: "platformUserActions" },
   { key: "manageProducts", label: "Products", actionKey: "productsActions" },
+];
+
+// These are the CRM project roles allowed for platform users (from model)
+const userRoles = [
+  { value: "Sale Executive", label: "Sale Executive" },
+  { value: "Telecaller", label: "Telecaller" },
+  { value: "Support Executive", label: "Support Executive" },
+  { value: "Manager", label: "Manager" },
+  { value: "Other", label: "Other" },
 ];
 
 const CRUDActionsTemplate = {
@@ -36,26 +45,27 @@ export default function CreateUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, control, watch, setValue, getValues } = useForm({
+  const { register, handleSubmit, control, watch, setValue } = useForm({
     defaultValues: {
       name: "",
       email: "",
       phone: "",
       password: "",
+      role: "Sale Executive",
       permissions: {
         manageHome: false,
         manageLeads: false,
         manageQuotation: false,
         managePurchaseOrder: false,
-        managePlatformUsers:false,
+        managePlatformUsers: false,
         manageReport: false,
-        manageProducts:false,
+        manageProducts: false,
         leadsActions: { ...CRUDActionsTemplate },
         quotationActions: { ...CRUDActionsTemplate },
         purchaseOrderActions: { ...CRUDActionsTemplate },
         reportActions: { ...CRUDActionsTemplate },
-        platformUserActions:{ ...CRUDActionsTemplate },
-        productsActions:{ ...CRUDActionsTemplate },
+        platformUserActions: { ...CRUDActionsTemplate },
+        productsActions: { ...CRUDActionsTemplate },
       },
     },
   });
@@ -76,7 +86,6 @@ export default function CreateUserPage() {
     mod: typeof modules[number],
     checked: boolean
   ) => {
-    // Only allow unchecking Read if the module itself is also unchecked
     if (mod.actionKey && watchedPermissions[mod.key]) {
       // ignore manual unchecking if module checked
       return;
@@ -88,15 +97,13 @@ export default function CreateUserPage() {
     try {
       setLoading(true);
 
-      const res = await api.post(
-        "/api/admin/create-user",
-        data,
-      );
+      // POST to backend, as per userController expects: name, email, phone, password, permissions, role
+      await api.post("/api/admin/create-user", data);
 
       toast.success("User created successfully!");
       router.push("/user");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create user");
+      toast.error(error.response?.data?.error || error.response?.data?.message || "Failed to create user");
     } finally {
       setLoading(false);
     }
@@ -130,12 +137,12 @@ export default function CreateUserPage() {
                 <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
+                  <Input
                     id="name"
-                    placeholder="Enter Name" 
+                    placeholder="Enter Name"
                     className="pl-10"
-                    {...register("name")} 
-                    required 
+                    {...register("name")}
+                    required
                   />
                 </div>
               </div>
@@ -144,13 +151,13 @@ export default function CreateUserPage() {
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
+                  <Input
                     id="email"
-                    type="email" 
-                    placeholder="abc@example.com" 
+                    type="email"
+                    placeholder="abc@example.com"
                     className="pl-10"
-                    {...register("email")} 
-                    required 
+                    {...register("email")}
+                    required
                   />
                 </div>
               </div>
@@ -159,12 +166,12 @@ export default function CreateUserPage() {
                 <Label htmlFor="phone">Phone Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
+                  <Input
                     id="phone"
-                    placeholder="123456890" 
+                    placeholder="123456890"
                     className="pl-10"
-                    {...register("phone")} 
-                    required 
+                    {...register("phone")}
+                    required
                   />
                 </div>
               </div>
@@ -173,15 +180,41 @@ export default function CreateUserPage() {
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
+                  <Input
                     id="password"
-                    type="password" 
-                    placeholder="••••••••" 
+                    type="password"
+                    placeholder="••••••••"
                     className="pl-10"
-                    {...register("password")} 
-                    required 
+                    {...register("password")}
+                    required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="role">Role</Label>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={(val) => field.onChange(val)}
+                      value={field.value}
+                      disabled={loading}
+                    >
+                      <SelectTrigger id="role" className="w-full">
+                        <SelectValue placeholder="Select user role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {userRoles.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
           </CardContent>
@@ -215,15 +248,14 @@ export default function CreateUserPage() {
                             checked={field.value}
                             onCheckedChange={(checked) => {
                               field.onChange(checked);
-                              // We need to tick read=true/false for the module's actionKey
                               if (mod.actionKey) {
-                                setValue(`permissions.${mod.actionKey}.read`, checked, { shouldDirty: true, shouldTouch: true });
+                                setValue(`permissions.${mod.actionKey}.read`, !!checked, { shouldDirty: true, shouldTouch: true });
                               }
                             }}
                           />
                         )}
                       />
-                      <Label 
+                      <Label
                         htmlFor={mod.key}
                         className="text-base font-medium cursor-pointer"
                       >
@@ -244,7 +276,6 @@ export default function CreateUserPage() {
                               name={`permissions.${mod.actionKey}.${action}`}
                               control={control}
                               render={({ field }) => {
-                                // For read: always checked and disabled if module is checked
                                 if (action === "read") {
                                   return (
                                     <div className="flex items-center gap-2">
@@ -256,7 +287,7 @@ export default function CreateUserPage() {
                                           handleReadActionChange(mod, !watchedPermissions[mod.actionKey]?.read);
                                         }}
                                       />
-                                      <Label 
+                                      <Label
                                         htmlFor={`${mod.actionKey}-${action}`}
                                         className="text-sm font-normal cursor-pointer capitalize"
                                       >
@@ -272,7 +303,7 @@ export default function CreateUserPage() {
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
                                       />
-                                      <Label 
+                                      <Label
                                         htmlFor={`${mod.actionKey}-${action}`}
                                         className="text-sm font-normal cursor-pointer capitalize"
                                       >

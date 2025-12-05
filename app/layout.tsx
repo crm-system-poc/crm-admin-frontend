@@ -33,7 +33,11 @@ export default function RootLayout({
           <div className="mt-16">{children}</div>
         </AuthProvider>
         
-        <Toaster richColors position="top-center" />
+        <Toaster richColors position="top-center" toastOptions={{
+          classNames: {
+            toast: "bg-background border border-border text-foreground"
+          }
+        }} />
       </body>
     </html>
   );

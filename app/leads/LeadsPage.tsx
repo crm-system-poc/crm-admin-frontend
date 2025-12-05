@@ -1,11 +1,12 @@
 "use client";
 
-import {useEffect, useMemo, useState} from "react";
-import {useRouter} from "next/navigation";
-import {api} from "@/lib/api";
-import {Lead, Paginated} from "@/components/leads/types";
-import {toast} from "sonner";
-import {ChevronLeft, ChevronRight, MoreVertical, Trash2} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { Lead, Paginated } from "@/components/leads/types";
+import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, MoreVertical, Trash2 } from "lucide-react";
+import { AssignLeadDialog } from "@/components/leads/AssignLeadDialog";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -13,8 +14,8 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -22,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {Badge} from "@/components/ui/badge";
-import {Separator} from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -40,7 +41,6 @@ import {
 } from "@/components/ui/table";
 import { hasModule, hasAction } from "@/lib/permissions";
 import { useAuth } from "@/components/context/AuthContext";
-
 
 import {
   AlertDialog,
@@ -64,17 +64,33 @@ const STATUS = [
   "lost",
 ] as const;
 const PRIORITY = ["low", "medium", "high"] as const;
-const SOURCE = ["website", "referral", "social_media", "cold_call", "email", "oem", "other"] as const;
+const SOURCE = [
+  "website",
+  "referral",
+  "social_media",
+  "cold_call",
+  "email",
+  "oem",
+  "other",
+] as const;
 
 export default function LeadsPage() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const permissions = user?.permissions || {};
-  
+
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [leadToAssign, setLeadToAssign] = useState<Lead | null>(null);
+
+  const canAssignLead =
+    user?.systemrole === "SuperAdmin" ||
+    user?.role === "Manager" ||
+    hasAction(user?.permissions, "manageLeads", "update");
+
   const [openedDropdown, setOpenedDropdown] = useState<string | null>(null);
 
-  // query state
-  const [q, setQ] = useState("");
+  // searchuery state
+  const [search, setsearch] = useState("");
   const [status, setStatus] = useState<string>("");
   const [priority, setPriority] = useState<string>("");
   const [source, setSource] = useState<string>("");
@@ -90,22 +106,29 @@ export default function LeadsPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Remove selection state (bulk actions)
-  // const [selected, setSelected] = useState<Record<string, boolean>>({});
-  // Remove deleteBulkDialogOpen
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  // const [deleteBulkDialogOpen, setDeleteBulkDialogOpen] = useState(false);
+
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
 
   const fetchLeads = async (pageNo = 1) => {
-    const statusQuery = status === "all" ? undefined : status;
-    const priorityQuery = priority === "all" ? undefined : priority;
-    const sourceQuery = source === "all" ? undefined : source;
+    const statussearchuery = status === "all" ? undefined : status;
+    const prioritysearchuery = priority === "all" ? undefined : priority;
+    const sourcesearchuery = source === "all" ? undefined : source;
+  
     try {
       setLoading(true);
+  
       const resp = await api.get(`/api/leads`, {
-        params: {page: pageNo, q, status: statusQuery, priority: priorityQuery, source: sourceQuery},
+        params: {
+          page: pageNo,
+          limit: 10,
+          search: search, // 🔥 Backend expects `search`, not `search`
+          status: statussearchuery,
+          priority: prioritysearchuery,
+          source: sourcesearchuery,
+        },
       });
+  
       setRows(resp.data.data || []);
       setPagination(
         resp.data.pagination || {
@@ -116,26 +139,26 @@ export default function LeadsPage() {
         }
       );
       setPage(pageNo);
-      // setSelected({});
-    } catch(e) {
+    } catch (e) {
       console.error(e);
       toast.error("Failed to load leads");
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchLeads(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // re-query when filters/search change
+  // re-searchuery when filters/search change
   useEffect(() => {
     const t = setTimeout(() => fetchLeads(1), 350);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, status, priority, source]);
+  }, [search, status, priority, source]);
 
   // Remove allSelected, toggleAll, toggleOne, bulk actions, bulk assign/delete
   // const allSelected = useMemo(
@@ -159,26 +182,26 @@ export default function LeadsPage() {
 
   // const onBulkAssign = async () => { ... }
 
-  const convertToQuotation = async (lead: Lead) => {
+  const convertTosearchuotation = async (lead: Lead) => {
     try {
-      toast.loading("Converting to quotation...");
+      toast.loading("Converting to searchuotation...");
       // Example: pass lead fields directly; adjust to your backend contract
       const payload = {
         customerName: lead.customerName,
         contactPerson: lead.contactPerson,
         email: lead.email,
         phoneNumber: lead.phoneNumber,
-        projectTitle: lead.requirementDetails?.slice(0, 40) || "Quotation",
-        requirementDetails: lead.requirementDetails,
+        projectTitle: lead.researchuirementDetails?.slice(0, 40) || "searchuotation",
+        researchuirementDetails: lead.researchuirementDetails,
         estimatedValue: lead.estimatedValue ?? 0,
         leadId: lead.id,
       };
-      await api.post(`/api/quotations`, payload);
+      await api.post(`/api/searchuotations`, payload);
       toast.dismiss();
-      toast.success("Quotation created");
-      // navigate to quotation list or detail
-      router.push("/quotation");
-    } catch(e) {
+      toast.success("searchuotation created");
+      // navigate to searchuotation list or detail
+      router.push("/searchuotation");
+    } catch (e) {
       toast.dismiss();
       toast.error("Failed to convert");
     }
@@ -186,7 +209,7 @@ export default function LeadsPage() {
 
   // Single delete by ID (uses dialog now, not window.confirm)
   const handleDeleteConfirmed = async () => {
-    if(!leadToDelete) return;
+    if (!leadToDelete) return;
     try {
       toast.loading("Deleting lead...");
       await api.delete(`/api/leads/${leadToDelete}`);
@@ -195,7 +218,7 @@ export default function LeadsPage() {
       setDeleteDialogOpen(false);
       setLeadToDelete(null);
       fetchLeads(page);
-    } catch(e) {
+    } catch (e) {
       toast.dismiss();
       toast.error("Failed to delete lead");
       setDeleteDialogOpen(false);
@@ -223,14 +246,15 @@ export default function LeadsPage() {
       {
         id: "index",
         header: "Sr.No",
-        cell: ({row}) => row.index + 1 + (pagination.page - 1) * pagination.limit,
+        cell: ({ row }) =>
+          row.index + 1 + (pagination.page - 1) * pagination.limit,
         enableSorting: false,
         enableHiding: false,
       },
       {
         accessorKey: "customerName",
         header: "Customer",
-        cell: ({row}) => (
+        cell: ({ row }) => (
           <button
             className="text-left hover:underline"
             onClick={() => router.push(`/leads/${row.original.id}`)}
@@ -240,13 +264,22 @@ export default function LeadsPage() {
           </button>
         ),
       },
-      {accessorKey: "contactPerson", header: "Contact"},
-      {accessorKey: "email", header: "Email"},
-      {accessorKey: "phoneNumber", header: "Phone"},
+      { accessorKey: "contactPerson", header: "Contact" },
+      { accessorKey: "email", header: "Email" },
+      { accessorKey: "phoneNumber", header: "Phone" },
+      {
+        accessorKey: "createdby",
+        header: "Created By",
+        cell: ({ row }) => (
+          <p className="capitalize" variant="secondary">
+            {row.original.createdBy.name}
+          </p>
+        ),
+      },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({row}) => (
+        cell: ({ row }) => (
           <Badge className="capitalize" variant="secondary">
             {row.original.status}
           </Badge>
@@ -255,26 +288,26 @@ export default function LeadsPage() {
       {
         accessorKey: "priority",
         header: "Priority",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           const p = row.original.priority || "low";
           const cls =
             p === "high"
               ? "bg-red-500 text-white"
               : p === "medium"
-                ? "bg-yellow-500 text-white"
-                : "bg-emerald-500 text-white";
+              ? "bg-yellow-500 text-white"
+              : "bg-emerald-500 text-white";
           return <Badge className={`capitalize ${cls}`}>{p}</Badge>;
         },
       },
       {
         accessorKey: "estimatedValue",
         header: "Value",
-        cell: ({row}) => <>₹ {row.original.estimatedValue ?? 0}</>,
+        cell: ({ row }) => <>₹ {row.original.estimatedValue ?? 0}</>,
       },
       {
         id: "actions",
         header: "",
-        cell: ({row}) => (
+        cell: ({ row }) => (
           <DropdownMenu
             open={openedDropdown === row.original.id}
             onOpenChange={(open) => {
@@ -291,72 +324,90 @@ export default function LeadsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-            {hasAction(user.permissions, "manageLeads", "update") && (
-              <DropdownMenuItem
-                // Fix: Prevent dropdown from closing & fix navigation bug!
-                onSelect={e => {
-                  e.preventDefault();
-                  // Do not close the menu, just navigate
-                  router.push(`/leads/${row.original.id}`);
-                }}
-                // <DropdownMenuItem/> in shadcn/ui doesn't close when onSelect preventsDefault
-              >
-                View details
-              </DropdownMenuItem>
-            )}
-             {hasAction(user.permissions, "manageQuotation", "create") && (
-              <DropdownMenuItem
-                onSelect={e => {
-                  e.preventDefault();
-                  router.push(`/leads/quotation/${row.original.id}`);
-                }}
-              >
-                Create Quotation
-              </DropdownMenuItem>
-             )}
-               {hasAction(user.permissions, "managePurchaseOrder", "read") && (
-              <DropdownMenuItem
-                onSelect={e => {
-                  e.preventDefault();
-                  router.push(`/leads/purchase-orders/${row.original.id}`);
-                }}
-              >
-                View Purchase orders
-              </DropdownMenuItem>
-               )}
-                 {hasAction(user.permissions, "manageQuotation", "read") && (
-              <DropdownMenuItem
-                onSelect={e => {
-                  e.preventDefault();
-                  router.push(`/leads/view/${row.original.id}`);
-                }}
-              >
-                View Quotations
-              </DropdownMenuItem>
-                 )}
+              {hasAction(user.permissions, "manageLeads", "update") && (
+                <DropdownMenuItem
+                  // Fix: Prevent dropdown from closing & fix navigation bug!
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    // Do not close the menu, just navigate
+                    router.push(`/leads/${row.original.id}`);
+                  }}
+                  // <DropdownMenuItem/> in shadcn/ui doesn't close when onSelect preventsDefault
+                >
+                  View details
+                </DropdownMenuItem>
+              )}
+              {canAssignLead && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setLeadToAssign(row.original);
+                    setAssignDialogOpen(true);
+                  }}
+                >
+                  Assign Lead
+                </DropdownMenuItem>
+              )}
+              {hasAction(user.permissions, "managesearchuotation", "create") && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    router.push(`/leads/searchuotation/${row.original.id}`);
+                  }}
+                >
+                  Create searchuotation
+                </DropdownMenuItem>
+              )}
+              {hasAction(user.permissions, "managePurchaseOrder", "read") && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    router.push(`/leads/purchase-orders/${row.original.id}`);
+                  }}
+                >
+                  View Purchase orders
+                </DropdownMenuItem>
+              )}
+              {hasAction(user.permissions, "managesearchuotation", "read") && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    router.push(`/leads/view/${row.original.id}`);
+                  }}
+                >
+                  View searchuotations
+                </DropdownMenuItem>
+              )}
               {/* Use AlertDialog for Delete Lead */}
-              <AlertDialog open={deleteDialogOpen && leadToDelete === row.original.id} onOpenChange={(open) => {
-                if(!open) {setDeleteDialogOpen(false); setLeadToDelete(null);}
-              }}>
+              <AlertDialog
+                open={deleteDialogOpen && leadToDelete === row.original.id}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setDeleteDialogOpen(false);
+                    setLeadToDelete(null);
+                  }
+                }}
+              >
                 <AlertDialogTrigger asChild>
-                {hasAction(user.permissions, "manageLeads", "delete") && (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // Leave dropdown open, do not call setOpenedDropdown(null)
-                      deleteLeadById(row.original.id);
-                    }}
-                    className="text-destructive"
-                  >
-                    Delete Lead
-                  </DropdownMenuItem>
-                )}
+                  {hasAction(user.permissions, "manageLeads", "delete") && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Leave dropdown open, do not call setOpenedDropdown(null)
+                        deleteLeadById(row.original.id);
+                      }}
+                      className="text-destructive"
+                    >
+                      Delete Lead
+                    </DropdownMenuItem>
+                  )}
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Lead</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete this lead? This action cannot be undone.
+                      Are you sure you want to delete this lead? This action
+                      cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -383,7 +434,14 @@ export default function LeadsPage() {
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
     ],
-    [router, deleteDialogOpen, leadToDelete, openedDropdown, pagination.page, pagination.limit]
+    [
+      router,
+      deleteDialogOpen,
+      leadToDelete,
+      openedDropdown,
+      pagination.page,
+      pagination.limit,
+    ]
   );
 
   const table = useReactTable({
@@ -393,13 +451,13 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-4">
+    <div className="p-6 max-w-7xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Leads</h1>
         <div className="ml-auto flex w-full md:w-auto gap-2">
           <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={search}
+            onChange={(e) => setsearch(e.target.value)}
             placeholder="Search by name, email, phone…"
             className="w-full md:w-72"
           />
@@ -448,10 +506,10 @@ export default function LeadsPage() {
             Refresh
           </Button>
           {hasAction(user.permissions, "manageLeads", "create") && (
-          <Button onClick={() => router.push("/leads/createleads")}>
-            Create Lead
-          </Button>
-            )}
+            <Button onClick={() => router.push("/leads/createleads")}>
+              Create Lead
+            </Button>
+          )}
         </div>
       </div>
 
@@ -494,7 +552,6 @@ export default function LeadsPage() {
                 </TableRow>
               ))
             )}
-
           </TableBody>
         </Table>
       </div>
@@ -524,6 +581,26 @@ export default function LeadsPage() {
           </Button>
         </div>
       </div>
-    </div >
+      {leadToAssign && (
+        <AssignLeadDialog
+          open={assignDialogOpen}
+          onOpenChange={(open) => {
+            // if (!open) setLeadToAssign(null);
+            setAssignDialogOpen(open);
+          }}
+          leadId={leadToAssign.id}
+          currentAssigneeName={
+            // only if you already populate assignedTo on the lead
+            // adjust based on your actual schema
+            // e.g. leadToAssign.assignedTo?.name
+            undefined
+          }
+          onAssigned={() => {
+            // refetch current page of leads
+            fetchLeads(page);
+          }}
+        />
+      )}
+    </div>
   );
 }

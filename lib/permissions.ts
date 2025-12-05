@@ -12,6 +12,7 @@ export const hasAction = (
   const normalize = {
     managePlatformUsers: "platformUserActions",
     manageProducts: "productsActions",
+    manageInquiry: "inquiryActions"
   } as Record<string, string>;
 
   const actionsKey = normalize[module];

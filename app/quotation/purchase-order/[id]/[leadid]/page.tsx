@@ -82,6 +82,9 @@ export default function CreatePurchaseOrder() {
   const [quotationData, setQuotationData] = useState<any>(null);
   const [quoteLoading, setQuoteLoading] = useState<boolean>(false);
 
+  // Add customer PO number state
+  const [customerPONumber, setCustomerPONumber] = useState("");
+
   // Set initial state based on fetched quotation
   const [items, setItems] = useState<Item[]>([{ ...EMPTY_ITEM }]);
   const [form, setForm] = useState({
@@ -152,6 +155,8 @@ export default function CreatePurchaseOrder() {
           notes: data.notes || "",
           poDate: "",
         });
+        // Reset customer PO number
+        setCustomerPONumber("");
       } catch (e) {
         toast.error("Failed to fetch quotation details.");
       } finally {
@@ -341,6 +346,11 @@ export default function CreatePurchaseOrder() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // Handles customer PO number input change
+  const handleCustomerPONumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomerPONumber(e.target.value.toUpperCase());
+  };
+
   // Validation to match backend model
   const validateItems = (): {
     valid: boolean;
@@ -461,6 +471,13 @@ export default function CreatePurchaseOrder() {
   const submitPurchaseOrder = async () => {
     setLoading(true);
 
+    // Validate customer PO number
+    if (!customerPONumber.trim()) {
+      toast.error("Customer PO Number is required.");
+      setLoading(false);
+      return;
+    }
+
     // Check if file is present
     if (!poPdfFile) {
       toast.error("PO PDF attachment is required (filename field must be 'poPdf')");
@@ -495,6 +512,7 @@ export default function CreatePurchaseOrder() {
     try {
       // Build FormData for multipart/form-data
       const formData = new FormData();
+      formData.append("poNumber", customerPONumber); // include manually entered PO number
       formData.append("leadId", leadIdParam);
       formData.append("quotationId", quotationIdParam);
       formData.append("items", JSON.stringify(parsed));
@@ -540,6 +558,12 @@ export default function CreatePurchaseOrder() {
         backendErr.toLowerCase().includes('license type is required')
       ) {
         toast.error(backendErr);
+      } else if (
+        backendErr &&
+        backendErr.toLowerCase().includes("po number") &&
+        backendErr.toLowerCase().includes("required")
+      ) {
+        toast.error("Customer PO Number is required (must be entered exactly as shown on customer PO).");
       } else {
         toast.error(backendErr || "Failed to create Purchase Order");
       }
@@ -551,6 +575,28 @@ export default function CreatePurchaseOrder() {
   return (
     <div className="p-6 space-y-4 rounded-md mt-16 bg-white  shadow border border-gray-200 p-4 ">
       <h1 className="text-xl font-semibold mb-4">Create Purchase Order</h1>
+
+      {/* Customer PO Number input */}
+      <div className="mb-6 ">
+        <label className="font-semibold text-sm block mb-1" htmlFor="customer-po-number">
+          Customer PO Number <span className="text-red-500">*</span>
+        </label>
+        <Input
+          id="customer-po-number"
+          type="text"
+          placeholder="Enter Customer PO number (as shown on customer PO)"
+          value={customerPONumber}
+          onChange={handleCustomerPONumberChange}
+          autoComplete="off"
+          maxLength={100}
+          required
+        />
+        <div className="text-xs text-muted-foreground mt-1">
+          <span>
+            Enter the customer's Purchase Order (PO) number exactly as shown on their PO. This is mandatory and cannot be changed later.
+          </span>
+        </div>
+      </div>
 
       {quoteLoading ? (
         <div className="py-6 text-center text-gray-400">Loading quotation&hellip;</div>

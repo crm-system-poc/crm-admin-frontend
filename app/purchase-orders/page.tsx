@@ -23,6 +23,7 @@ import {
 import { MoreVertical } from "lucide-react";
 import { hasModule, hasAction } from "@/lib/permissions";
 import { useAuth } from "@/components/context/AuthContext";
+import { AssignPurchaseOrderDialog } from "@/components/purchaseOrders/AssignPurchaseOrderDialog";
 
 // Simple AlertDialog
 function ConfirmDialog({ open, onConfirm, onCancel, title, description }: any) {
@@ -59,7 +60,7 @@ type CustomerDetails = {
   };
 };
 
-type Lead = {
+type PurchaseOrder = {
   customerName: string;
   contactPerson: string;
   email: string;
@@ -101,7 +102,7 @@ type PurchaseOrder = {
   id: string;
   poNumber: string;
   customerDetails: CustomerDetails;
-  leadId: Lead;
+  PurchaseOrderId: PurchaseOrder;
   quotationId: Quotation;
   poDate: string;
   poPdf: POPdf;
@@ -127,6 +128,14 @@ export default function PurchaseOrderList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [PurchaseOrderToAssign, setPurchaseOrderToAssign] = useState<PurchaseOrder | null>(null);
+
+  const canAssignPurchaseOrder =
+    user?.systemrole === "SuperAdmin" ||
+    user?.role === "Manager" ||
+    hasAction(user?.permissions, "managePurchaseOrder", "update");
 
   const fetchOrders = async () => {
     const res = await api.get("/api/purchase-orders");
@@ -169,7 +178,7 @@ export default function PurchaseOrderList() {
               <TableHead className="w-10 text-center">Sr.No</TableHead>
               <TableHead>PO Number</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>Lead</TableHead>
+              <TableHead>PurchaseOrder</TableHead>
               <TableHead>Quotation</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Action</TableHead>
@@ -189,8 +198,8 @@ export default function PurchaseOrderList() {
                   <TableCell>{po.poNumber || po.id}</TableCell>
                   <TableCell>{po.customerDetails?.contactPerson || "-"}</TableCell>
                   <TableCell>
-                    {po.leadId
-                      ? `${po.leadId.customerName} `
+                    {po.PurchaseOrderId
+                      ? `${po.PurchaseOrderId.customerName} `
                       : "-"}
                   </TableCell>
                   <TableCell>
@@ -216,6 +225,17 @@ export default function PurchaseOrderList() {
                           View Details
                         </DropdownMenuItem>
                       )}
+                       {canAssignPurchaseOrder && (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setPurchaseOrderToAssign(po);
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            Assign PurchaseOrder
+                          </DropdownMenuItem>
+                        )}
                        {hasAction(user.permissions, "managePurchaseOrder", "read") && po.poPdf?.s3Url && (
                         <DropdownMenuItem asChild>
                           <a
@@ -254,6 +274,27 @@ export default function PurchaseOrderList() {
         onCancel={() => { setDialogOpen(false); setDeleteId(null); }}
         onConfirm={confirmDelete}
       />
+
+{PurchaseOrderToAssign && (
+        <AssignPurchaseOrderDialog
+          open={assignDialogOpen}
+          onOpenChange={(open) => {
+            // if (!open) setLeadToAssign(null);
+            setAssignDialogOpen(open);
+          }}
+          purchaseOrderId={PurchaseOrderToAssign.id}
+          currentAssigneeName={
+            // only if you already populate assignedTo on the lead
+            // adjust based on your actual schema
+            // e.g. leadToAssign.assignedTo?.name
+            undefined
+          }
+          onAssigned={() => {
+            // refetch current page of leads
+            fetchOrders(page);
+          }}
+        />
+      )}
     </div>
   );
 }

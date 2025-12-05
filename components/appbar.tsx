@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, Search, Home, Users, IndianRupee, ListOrdered, File, Box, UserCog} from "lucide-react";
+import { Menu, Bell, Search, Home, Users, IndianRupee, ListOrdered, File, Box, UserCog, Contact} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { useAuth } from "@/components/context/AuthContext";
 
+
 export function AppBar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -37,6 +38,7 @@ export function AppBar() {
     { label: "Reports", href: "/reports", icon: File, perm: "manageReport" },
     { label: "Products", href: "/products", icon: Box, perm: "manageProducts" },
     { label: "Users", href: "/user", icon: UserCog, perm: "managePlatformUsers" },
+    { label: "Inquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
   ];
 
   const handleLogout = async () => {
