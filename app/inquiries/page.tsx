@@ -226,9 +226,9 @@ const [statusFilter, setStatusFilter] = useState("all");
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
-                                      variant="success"
+                                      variant="default"
                                       size="sm"
-                                      className="gap-1"
+                                      className="gap-1 bg-green-600 hover:bg-green-700 text-white"
                                     >
                                       <ArrowRightCircle className="h-4 w-4" />
                                       Convert To Lead

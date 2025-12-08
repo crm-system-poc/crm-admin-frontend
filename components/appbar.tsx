@@ -38,7 +38,7 @@ export function AppBar() {
     { label: "Reports", href: "/reports", icon: File, perm: "manageReport" },
     { label: "Products", href: "/products", icon: Box, perm: "manageProducts" },
     { label: "Users", href: "/user", icon: UserCog, perm: "managePlatformUsers" },
-    { label: "Inquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
+    { label: "Enquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
   ];
 
   const handleLogout = async () => {
