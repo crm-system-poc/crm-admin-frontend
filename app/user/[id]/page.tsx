@@ -41,7 +41,8 @@ const modules = [
   { key: "managePurchaseOrder", label: "Purchase Order", description: "Handle purchase orders", actionKey: "purchaseOrderActions" },
   { key: "manageReport", label: "Report", description: "View and generate reports", actionKey: "reportActions" },
   { key: "managePlatformUsers", label: "User Management", description: "Manage platform users", actionKey: "platformUserActions" },
-  { key: "manageProducts", label: "Products", description: "Manage Products", actionKey: "productsActions" }
+  { key: "manageProducts", label: "Products", description: "Manage Products", actionKey: "productsActions" },
+  { key: "manageInquiry", label: "Enquiry", description: "Manage Enquiry", actionKey: "inquiryActions" }
 ];
 
 const CRUDActionsTemplate = {

@@ -44,20 +44,29 @@ import ProtectedPage from "@/components/ProtectedPage";
 import { hasAction } from "@/lib/permissions";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import AssignInquiryUsersModal from "@/components/Inquiry/AssignInquiryUsersModal";
+import { useAuth } from "@/components/context/AuthContext";
 
 export default function InquiriesPage() {
+
+  const { user, logout } = useAuth();
+  const permissions = user?.permissions || {};
+
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
-const [limit] = useState(10);
-const [totalPages, setTotalPages] = useState(1);
-const [statusFilter, setStatusFilter] = useState("all");
+  const [limit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
 
-  const permissions =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("admin") || "{}")?.permissions
-      : {};
+  const canAssignInquiry =
+  user?.systemrole === "SuperAdmin" ||
+  user?.role === "Manager" ||
+  hasAction(user?.permissions, "manageInquiry", "update");
+
 
   const loadInquiries = async () => {
     try {
@@ -158,7 +167,6 @@ const [statusFilter, setStatusFilter] = useState("all");
                   {filteredInquiries.length} total inquiries
                 </CardDescription>
               </div>
-              
 
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -278,6 +286,18 @@ const [statusFilter, setStatusFilter] = useState("all");
                                 </Button>
                               </Link>
                             )}
+                           {canAssignInquiry &&  (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedInquiry(row.id);
+                                setAssignOpen(true);
+                              }}
+                            >
+                              Assign Users
+                            </Button>
+                          )}
                             {hasAction(
                               permissions,
                               "manageInquiry",
@@ -354,6 +374,14 @@ const [statusFilter, setStatusFilter] = useState("all");
             </div>
           </CardContent>
         </Card>
+        {assignOpen && selectedInquiry && (
+          <AssignInquiryUsersModal
+            inquiryId={selectedInquiry}
+            open={assignOpen}
+            onClose={() => setAssignOpen(false)}
+            onSuccess={loadInquiries}
+          />
+        )}
       </div>
     </ProtectedPage>
   );

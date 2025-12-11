@@ -114,10 +114,10 @@ export default function LeadsPage() {
     const statussearchuery = status === "all" ? undefined : status;
     const prioritysearchuery = priority === "all" ? undefined : priority;
     const sourcesearchuery = source === "all" ? undefined : source;
-  
+
     try {
       setLoading(true);
-  
+
       const resp = await api.get(`/api/leads`, {
         params: {
           page: pageNo,
@@ -128,7 +128,7 @@ export default function LeadsPage() {
           source: sourcesearchuery,
         },
       });
-  
+
       setRows(resp.data.data || []);
       setPagination(
         resp.data.pagination || {
@@ -146,7 +146,6 @@ export default function LeadsPage() {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchLeads(1);
@@ -191,7 +190,8 @@ export default function LeadsPage() {
         contactPerson: lead.contactPerson,
         email: lead.email,
         phoneNumber: lead.phoneNumber,
-        projectTitle: lead.researchuirementDetails?.slice(0, 40) || "searchuotation",
+        projectTitle:
+          lead.researchuirementDetails?.slice(0, 40) || "searchuotation",
         researchuirementDetails: lead.researchuirementDetails,
         estimatedValue: lead.estimatedValue ?? 0,
         leadId: lead.id,
@@ -305,6 +305,23 @@ export default function LeadsPage() {
         cell: ({ row }) => <>₹ {row.original.estimatedValue ?? 0}</>,
       },
       {
+        accessorKey: "Lead Age",
+        header: "Lead Age",
+        cell: ({ row }) => {
+          // Calculate age in days from createdAt
+          const createdAt = row.original.createdAt ? new Date(row.original.createdAt) : null;
+          let ageInDays = 0;
+          if (createdAt) {
+            const now = new Date();
+            const diff = now.getTime() - createdAt.getTime();
+            ageInDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+          }
+          return (
+            <Badge variant="outline">{ageInDays} days</Badge>
+          );
+        },
+      },
+      {
         id: "actions",
         header: "",
         cell: ({ row }) => (
@@ -348,14 +365,14 @@ export default function LeadsPage() {
                   Assign Lead
                 </DropdownMenuItem>
               )}
-              {hasAction(user.permissions, "managesearchuotation", "create") && (
+              {hasAction(user.permissions, "manageQuotation", "create") && (
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    router.push(`/leads/searchuotation/${row.original.id}`);
+                    router.push(`/leads/Quotation/${row.original.id}`);
                   }}
                 >
-                  Create searchuotation
+                  Create Quotation
                 </DropdownMenuItem>
               )}
               {hasAction(user.permissions, "managePurchaseOrder", "read") && (
@@ -368,14 +385,14 @@ export default function LeadsPage() {
                   View Purchase orders
                 </DropdownMenuItem>
               )}
-              {hasAction(user.permissions, "managesearchuotation", "read") && (
+              {hasAction(user.permissions, "manageQuotation", "read") && (
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
                     router.push(`/leads/view/${row.original.id}`);
                   }}
                 >
-                  View searchuotations
+                  View Quotations
                 </DropdownMenuItem>
               )}
               {/* Use AlertDialog for Delete Lead */}

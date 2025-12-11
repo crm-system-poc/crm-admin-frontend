@@ -8,7 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ export default function CreateInquiryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     customerName: "",
+    companyName:"",
     phoneNumber: "",
     email: "",
     city: "",
@@ -40,21 +41,21 @@ export default function CreateInquiryPage() {
   });
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setIsSubmitting(true);
       await api.post("/api/inquiries", formData);
-      
+
       toast({
         title: "Success!",
         description: "Inquiry created successfully.",
       });
-      
+
       router.push("/inquiries");
     } catch (error) {
       toast({
@@ -79,7 +80,9 @@ export default function CreateInquiryPage() {
             </Button>
           </Link>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Create Inquiry</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Create Inquiry
+            </h2>
             <p className="text-muted-foreground">
               Add a new customer inquiry to the system
             </p>
@@ -114,7 +117,9 @@ export default function CreateInquiryPage() {
                     id="customerName"
                     placeholder="Enter customer name"
                     value={formData.customerName}
-                    onChange={(e) => handleChange("customerName", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("customerName", e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -129,7 +134,9 @@ export default function CreateInquiryPage() {
                     type="tel"
                     placeholder="Enter phone number"
                     value={formData.phoneNumber}
-                    onChange={(e) => handleChange("phoneNumber", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("phoneNumber", e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -143,6 +150,17 @@ export default function CreateInquiryPage() {
                     placeholder="Enter email address"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    placeholder="Company Name"
+                    value={formData.companyName}
+                    onChange={(e) =>
+                      handleChange("companyName",  e.target.value )
+                    }
                   />
                 </div>
 
@@ -214,7 +232,6 @@ export default function CreateInquiryPage() {
             </form>
           </CardContent>
         </Card>
-
       </div>
     </ProtectedPage>
   );

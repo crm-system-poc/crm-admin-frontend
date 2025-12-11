@@ -23,6 +23,7 @@ const modules = [
   { key: "manageReport", label: "Report", actionKey: "reportActions" },
   { key: "managePlatformUsers", label: "Platform User", actionKey: "platformUserActions" },
   { key: "manageProducts", label: "Products", actionKey: "productsActions" },
+  { key: "manageInquiry", label: "Enquiry", actionKey: "inquiryActions" },
 ];
 
 // These are the CRM project roles allowed for platform users (from model)
@@ -66,6 +67,7 @@ export default function CreateUserPage() {
         reportActions: { ...CRUDActionsTemplate },
         platformUserActions: { ...CRUDActionsTemplate },
         productsActions: { ...CRUDActionsTemplate },
+        inquiryActions: { ...CRUDActionsTemplate },
       },
     },
   });
