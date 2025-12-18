@@ -33,14 +33,14 @@ export function AppBar() {
   const navItems = [
     { label: "Home", href: "/", icon: Home, perm: "manageHome" },
     { label: "Accounts", href: "/accounts", icon: Users, perm: "manageLeads" },
+    { label: "Enquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
     { label: "Leads", href: "/leads", icon: Users, perm: "manageLeads" },
     { label: "Quotations", href: "/quotation", icon: IndianRupee, perm: "manageQuotation" },
     { label: "Purchase Orders", href: "/purchase-orders", icon: ListOrdered, perm: "managePurchaseOrder" },
-    { label: "Reports", href: "/reports", icon: File, perm: "manageReport" },
     { label: "Products", href: "/products", icon: Box, perm: "manageProducts" },
     { label: "OEM", href: "/oems", icon: Box, perm: "manageProducts" },
     { label: "Users", href: "/user", icon: UserCog, perm: "managePlatformUsers" },
-    { label: "Enquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
+    { label: "Reports", href: "/reports", icon: File, perm: "manageReport" },
   ];
 
   const handleLogout = async () => {
@@ -98,7 +98,7 @@ export function AppBar() {
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center gap-2 ">
+        <nav className="hidden md:flex items-center gap-1 ">
           {navItems
             .filter(item => permissions[item.perm]) 
             .map(({ href, label, icon: Icon }) => (
@@ -106,7 +106,7 @@ export function AppBar() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all hover:bg-pink-50 hover:text-pink-600",
+                  "flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-all hover:bg-pink-50 hover:text-pink-600",
                   pathname === href && "bg-pink-600 text-white shadow-sm"
                 )}
               >

@@ -26,7 +26,8 @@ export default function ReportsPage() {
   const { dashboardData, isLoading, refreshReports } = useReports();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    // <div className="container mx-auto p-6 space-y-6">
+    <div className="p-6 max-w-8xl mx-auto space-y-4">
    
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

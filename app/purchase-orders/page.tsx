@@ -166,7 +166,7 @@ export default function PurchaseOrderList() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 ">
+    <div className="p-6 max-w-8xl mx-auto space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Purchase Orders</h1>
       </div>

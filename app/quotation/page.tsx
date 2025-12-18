@@ -156,7 +156,7 @@ export default function QuotationList() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-6 space-y-6 max-w-8xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
       </div>

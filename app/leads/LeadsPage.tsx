@@ -323,7 +323,7 @@ export default function LeadsPage() {
       },
       {
         id: "actions",
-        header: "",
+        header: "Action",
         cell: ({ row }) => (
           <DropdownMenu
             open={openedDropdown === row.original.id}
@@ -468,7 +468,7 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-4">
+    <div className="p-6 max-w-8xl mx-auto space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Leads</h1>
         <div className="ml-auto flex w-full md:w-auto gap-2">

@@ -59,7 +59,7 @@ export default function OEMPage() {
   };
 
   return (
-    <Card className="max-w-6xl mx-auto p-6 mt-24">
+    <div className="p-6 max-w-8xl mx-auto space-y-4">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle>OEMs</CardTitle>
         <Button
@@ -173,6 +173,6 @@ export default function OEMPage() {
           onSuccess={loadData}
         />
       </CardContent>
-    </Card>
+    </div>
   );
 }
