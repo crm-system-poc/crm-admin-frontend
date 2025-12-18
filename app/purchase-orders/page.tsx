@@ -218,7 +218,7 @@ export default function PurchaseOrderList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                      {hasAction(user.permissions, "managePurchaseOrder", "read") && (
+                      {hasAction(user?.permissions, "managePurchaseOrder", "read") && (
                         <DropdownMenuItem
                           onClick={() => router.push(`/purchase-orders/${po.id}`)}
                         >
@@ -248,7 +248,7 @@ export default function PurchaseOrderList() {
                         </DropdownMenuItem>
                       )}
                         <DropdownMenuSeparator />
-                        {hasAction(user.permissions, "managePurchaseOrder", "delete") && (
+                        {hasAction(user?.permissions, "managePurchaseOrder", "delete") && (
                         <DropdownMenuItem
                           onClick={() => handleDelete(po.id)}
                           disabled={deleting && deleteId === po.id}

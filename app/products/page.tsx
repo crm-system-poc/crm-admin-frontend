@@ -252,7 +252,7 @@ export default function ProductsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Products
         </h1>
-        {hasAction(user.permissions, "manageProducts", "create") && (
+        {hasAction(user?.permissions, "manageProducts", "create") && (
         <Button
           className="gap-2 bg-pink-600 hover:bg-pink-700 rounded-lg shadow"
           size="sm"

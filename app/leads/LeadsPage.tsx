@@ -369,7 +369,7 @@ export default function LeadsPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    router.push(`/leads/Quotation/${row.original.id}`);
+                    router.push(`/leads/quotation/${row.original.id}`);
                   }}
                 >
                   Create Quotation

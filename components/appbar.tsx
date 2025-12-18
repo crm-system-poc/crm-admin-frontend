@@ -32,11 +32,13 @@ export function AppBar() {
 
   const navItems = [
     { label: "Home", href: "/", icon: Home, perm: "manageHome" },
+    { label: "Accounts", href: "/accounts", icon: Users, perm: "manageLeads" },
     { label: "Leads", href: "/leads", icon: Users, perm: "manageLeads" },
     { label: "Quotations", href: "/quotation", icon: IndianRupee, perm: "manageQuotation" },
     { label: "Purchase Orders", href: "/purchase-orders", icon: ListOrdered, perm: "managePurchaseOrder" },
     { label: "Reports", href: "/reports", icon: File, perm: "manageReport" },
     { label: "Products", href: "/products", icon: Box, perm: "manageProducts" },
+    { label: "OEM", href: "/oems", icon: Box, perm: "manageProducts" },
     { label: "Users", href: "/user", icon: UserCog, perm: "managePlatformUsers" },
     { label: "Enquiry", href: "/inquiries", icon: Contact, perm: "manageInquiry" },
   ];
@@ -96,7 +98,7 @@ export function AppBar() {
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center gap-2 ml-16">
+        <nav className="hidden md:flex items-center gap-2 ">
           {navItems
             .filter(item => permissions[item.perm]) 
             .map(({ href, label, icon: Icon }) => (

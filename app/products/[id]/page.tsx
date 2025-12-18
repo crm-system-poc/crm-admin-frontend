@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -33,6 +41,27 @@ export default function EditProductPage() {
     id: "",
   });
   const [loading, setLoading] = useState(false);
+
+  
+  const [oems, setOems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOEMs = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/oems/dropdown", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setOems(data.data || []);
+        }
+      } catch (err) {
+        toast.error("Failed to load OEMs");
+      }
+    };
+
+    fetchOEMs();
+  }, []);
 
   // Fetch product by id
   useEffect(() => {
@@ -188,18 +217,29 @@ export default function EditProductPage() {
               />
             </div>
             {/* OEM */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="oem">OEM</Label>
-              <Input
-                id="oem"
-                name="oem"
-                placeholder="Eg. Adobe"
+            <div className="flex flex-col gap-2 w-full">
+              <Label>OEM</Label>
+              <Select
                 value={form.oem}
-                onChange={handleChange}
-                required={false}
-                disabled={loading}
-              />
-            </div>
+                onValueChange={(value) => setForm({ ...form, oem: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select OEM" />
+                </SelectTrigger>
+                <SelectContent>
+                  {oems.length === 0 && (
+                    <SelectItem value="__none" disabled>
+                      No OEMs found
+                    </SelectItem>
+                  )}
+                  {oems.map((oem) => (
+                    <SelectItem key={oem.id} value={oem.name}>
+                      {oem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div> 
             {/* OEM Price */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="oemPrice">OEM Price</Label>

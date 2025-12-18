@@ -328,7 +328,7 @@ export default function QuotationList() {
                           </DropdownMenuItem>
                         )}
                         {hasAction(
-                          user.permissions,
+                          user?.permissions,
                           "managePurchaseOrder",
                           "create"
                         ) && (
@@ -350,7 +350,7 @@ export default function QuotationList() {
                         >
                           <AlertDialogTrigger asChild>
                             {hasAction(
-                              user.permissions,
+                              user?.permissions,
                               "manageQuotation",
                               "delete"
                             ) && (
