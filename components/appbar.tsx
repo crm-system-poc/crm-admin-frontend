@@ -98,7 +98,7 @@ export function AppBar() {
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center gap-1 ">
+        <nav className="hidden md:flex items-center gap-1 ml-10">
           {navItems
             .filter(item => permissions[item.perm]) 
             .map(({ href, label, icon: Icon }) => (

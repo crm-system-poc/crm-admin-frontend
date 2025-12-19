@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { MoreVertical } from "lucide-react";
+
+import { api } from "@/lib/api";
+import { useAuth } from "@/components/context/AuthContext";
+import { hasAction } from "@/lib/permissions";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -20,279 +32,302 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
-import { hasModule, hasAction } from "@/lib/permissions";
-import { useAuth } from "@/components/context/AuthContext";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { AssignPurchaseOrderDialog } from "@/components/purchaseOrders/AssignPurchaseOrderDialog";
 
-// Simple AlertDialog
-function ConfirmDialog({ open, onConfirm, onCancel, title, description }: any) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
-      <div className="bg-white dark:bg-gray-900 border rounded-lg shadow-lg p-6 w-[360px] max-w-[85vw]">
-        <div className="font-bold text-lg mb-2">{title}</div>
-        <div className="mb-4 text-sm">{description}</div>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button variant="destructive" size="sm" onClick={onConfirm}>
-            Yes, Delete
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type CustomerDetails = {
-  customerName: string;
-  contactPerson: string;
-  email: string;
-  phoneNumber: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-};
-
-type PurchaseOrder = {
-  customerName: string;
-  contactPerson: string;
-  email: string;
-  id: string;
-};
-
-type Quotation = {
-  quoteId: string;
-  totalQuoteValue: number;
-  id: string;
-};
-
-type Item = {
-  productId: string;
-  description: string;
-  quantity: number;
-  licenseType: string;
-  licenseExpiryDate?: string;
-  unitPrice: number;
-  totalPrice: number;
-  _id: string;
-};
-
-type POPdf = {
-  originalName: string;
-  s3Key: string;
-  s3Url: string;
-  fileSize: number;
-  uploadedAt: string;
-};
-
-type CreatedBy = {
-  name: string;
-  email: string;
-  id: string;
-};
+/* ---------------- TYPES ---------------- */
 
 type PurchaseOrder = {
   id: string;
   poNumber: string;
-  customerDetails: CustomerDetails;
-  PurchaseOrderId: PurchaseOrder;
-  quotationId: Quotation;
-  poDate: string;
-  poPdf: POPdf;
-  items: Item[];
-  totalAmount: number;
-  currency: string;
   status: string;
-  paymentTerms: string;
-  deliveryTerms: string;
-  notes: string;
-  attachments: any[];
-  createdBy: CreatedBy;
-  createdAt: string;
-  updatedAt: string;
+  customerDetails: {
+    customerName: string;
+  };
+  leadId?: {
+    customerName: string;
+  };
+  quotationId?: {
+    quoteId: string;
+  };
+  poPdf?: {
+    s3Url: string;
+  };
 };
+
+type Pagination = {
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+/* ---------------- COMPONENT ---------------- */
 
 export default function PurchaseOrderList() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const permissions = user?.permissions || {};
+  const { user } = useAuth();
 
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<"all" | "draft" | "approved" | "completed">("all");
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [poToAssign, setPoToAssign] = useState<PurchaseOrder | null>(null);
 
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [PurchaseOrderToAssign, setPurchaseOrderToAssign] = useState<PurchaseOrder | null>(null);
-
-  const canAssignPurchaseOrder =
+  const canAssign =
     user?.systemrole === "SuperAdmin" ||
     user?.role === "Manager" ||
     hasAction(user?.permissions, "managePurchaseOrder", "update");
 
-  const fetchOrders = async () => {
-    const res = await api.get("/api/purchase-orders");
+  /* ---------------- FETCH ---------------- */
+
+  const fetchOrders = async (page = 1) => {
+    const res = await api.get(`/api/purchase-orders?page=${page}&limit=10`);
     setOrders(res.data.data || []);
+    setPagination(res.data.pagination);
   };
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  const handleDelete = (id: string) => {
-    setDeleteId(id);
-    setDialogOpen(true);
-  };
+  /* ---------------- FILTERING ---------------- */
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((po) => {
+      const matchSearch =
+        po.poNumber.toLowerCase().includes(search.toLowerCase()) ||
+        po.customerDetails.customerName
+          .toLowerCase()
+          .includes(search.toLowerCase());
+
+      const matchStatus = status === "all" || po.status === status;
+
+      return matchSearch && matchStatus;
+    });
+  }, [orders, search, status]);
+
+  /* ---------------- DELETE ---------------- */
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    setDeleting(true);
-    try {
-      await api.delete(`/api/purchase-orders/${deleteId}`);
-      setOrders((prev) => prev.filter((order) => order.id !== deleteId));
-      setDialogOpen(false);
-      setDeleteId(null);
-    } catch (err) {
-      alert("Failed to delete Purchase Order.");
-    }
-    setDeleting(false);
+    await api.delete(`/api/purchase-orders/${deleteId}`);
+    fetchOrders(pagination.page);
+    setDeleteId(null);
   };
 
+  /* ---------------- UI ---------------- */
+
   return (
-    <div className="p-6 max-w-8xl mx-auto space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Purchase Orders</h1>
-      </div>
+    <div className="p-4 md:p-6 max-w-8xl mx-auto space-y-4">
+      <Card>
+        <CardHeader className="space-y-4">
+          <CardTitle className="text-2xl">Purchase Orders</CardTitle>
 
-      <div className="border rounded-md shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="w-10 text-center">Sr.No</TableHead>
-              <TableHead>PO Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>PurchaseOrder</TableHead>
-              <TableHead>Quotation</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center">
-                  Purchase order not found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders.map((po, idx) => (
-                <TableRow key={po.id} className="hover:bg-muted/30">
-                  <TableCell className="text-center">{idx + 1}</TableCell>
-                  <TableCell>{po.poNumber || po.id}</TableCell>
-                  <TableCell>{po.customerDetails?.contactPerson || "-"}</TableCell>
-                  <TableCell>
-                    {po.PurchaseOrderId
-                      ? `${po.PurchaseOrderId.customerName} `
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {po.quotationId
-                      ? `${po.quotationId.quoteId ?? po.quotationId.id}`
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="capitalize">{po.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                      {hasAction(user?.permissions, "managePurchaseOrder", "read") && (
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/purchase-orders/${po.id}`)}
-                        >
-                          View Details
-                        </DropdownMenuItem>
-                      )}
-                       {canAssignPurchaseOrder && (
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setPurchaseOrderToAssign(po);
-                              setAssignDialogOpen(true);
-                            }}
-                          >
-                            Assign PurchaseOrder
-                          </DropdownMenuItem>
-                        )}
-                       {hasAction(user.permissions, "managePurchaseOrder", "read") && po.poPdf?.s3Url && (
-                        <DropdownMenuItem asChild>
-                          <a
-                            href={po.poPdf.s3Url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            View PDF
-                          </a>
-                        </DropdownMenuItem>
-                      )}
-                        <DropdownMenuSeparator />
-                        {hasAction(user?.permissions, "managePurchaseOrder", "delete") && (
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(po.id)}
-                          disabled={deleting && deleteId === po.id}
-                          className="text-destructive"
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {/* SEARCH + STATUS */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <Input
+              placeholder="Search by PO or Customer..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="md:max-w-sm"
+            />
+
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as any)}
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {/* DESKTOP TABLE */}
+          <div className="hidden md:block border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40">
+                  <TableHead>Sr.No</TableHead>
+                  <TableHead>PO Number</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Quotation</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
 
-      <ConfirmDialog
-        open={dialogOpen}
-        title="Delete Purchase Order"
-        description="Are you sure you want to delete this purchase order? This action cannot be undone."
-        onCancel={() => { setDialogOpen(false); setDeleteId(null); }}
-        onConfirm={confirmDelete}
-      />
+              <TableBody>
+                {filteredOrders.map((po, i) => (
+                  <TableRow key={po.id}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>{po.poNumber}</TableCell>
+                    <TableCell>{po.customerDetails.customerName}</TableCell>
+                    <TableCell>{po.quotationId?.quoteId || "-"}</TableCell>
+                    <TableCell>
+                      <Badge className="capitalize">{po.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/purchase-orders/${po.id}`)
+                            }
+                          >
+                            View
+                          </DropdownMenuItem>
 
-{PurchaseOrderToAssign && (
+                          {canAssign && (
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setPoToAssign(po);
+                                setAssignOpen(true);
+                              }}
+                            >
+                              Assign
+                            </DropdownMenuItem>
+                          )}
+
+                          {po.poPdf?.s3Url && (
+                            <DropdownMenuItem asChild>
+                              <a href={po.poPdf.s3Url} target="_blank">
+                                View PDF
+                              </a>
+                            </DropdownMenuItem>
+                          )}
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => setDeleteId(po.id)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* MOBILE CARDS */}
+          <div className="md:hidden space-y-3">
+            {filteredOrders.map((po) => (
+              <Card key={po.id}>
+                <CardContent className="p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <div className="font-semibold">{po.poNumber}</div>
+                    <Badge className="capitalize">{po.status}</Badge>
+                  </div>
+                  <div className="text-sm">
+                    Customer: {po.customerDetails.customerName}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      router.push(`/purchase-orders/${po.id}`)
+                    }
+                  >
+                    View Details
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              variant="outline"
+              disabled={pagination.page === 1}
+              onClick={() => fetchOrders(pagination.page - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() => fetchOrders(pagination.page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DELETE */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Purchase Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ASSIGN */}
+      {poToAssign && (
         <AssignPurchaseOrderDialog
-          open={assignDialogOpen}
-          onOpenChange={(open) => {
-            // if (!open) setLeadToAssign(null);
-            setAssignDialogOpen(open);
-          }}
-          purchaseOrderId={PurchaseOrderToAssign.id}
-          currentAssigneeName={
-            // only if you already populate assignedTo on the lead
-            // adjust based on your actual schema
-            // e.g. leadToAssign.assignedTo?.name
-            undefined
-          }
-          onAssigned={() => {
-            // refetch current page of leads
-            fetchOrders(page);
-          }}
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
+          purchaseOrderId={poToAssign.id}
+          onAssigned={() => fetchOrders(pagination.page)}
         />
       )}
     </div>

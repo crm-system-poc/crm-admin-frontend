@@ -31,6 +31,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Search,
   Edit,
@@ -38,6 +44,8 @@ import {
   Phone,
   User,
   ArrowRightCircle,
+  MoreVertical,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedPage from "@/components/ProtectedPage";
@@ -62,11 +70,18 @@ export default function InquiriesPage() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
 
-  const canAssignInquiry =
-  user?.systemrole === "SuperAdmin" ||
-  user?.role === "Manager" ||
-  hasAction(user?.permissions, "manageInquiry", "update");
+  // State for delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteRow, setDeleteRow] = useState<any | null>(null);
 
+  // State for convert dialog
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [convertRow, setConvertRow] = useState<any | null>(null);
+
+  const canAssignInquiry =
+    user?.systemrole === "SuperAdmin" ||
+    user?.role === "Manager" ||
+    hasAction(user?.permissions, "manageInquiry", "update");
 
   const loadInquiries = async () => {
     try {
@@ -223,122 +238,179 @@ export default function InquiriesPage() {
                         <TableCell>{getStatusBadge(row.status)}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
-                            {hasAction(
-                              permissions,
-                              "manageInquiry",
-                              "update"
-                            ) &&
-                              !row.isConvertedToLead &&
-                              (row.status === "new" ||
-                                row.status === "contacted") && (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      className="gap-1 bg-green-600 hover:bg-green-700 text-white"
-                                    >
-                                      <ArrowRightCircle className="h-4 w-4" />
-                                      Convert To Lead
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Convert to Lead?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will create a Lead from{" "}
-                                        <strong>{row.customerName}</strong>{" "}
-                                        inquiry and update its status.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancel
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() =>
-                                          handleConvertToLead(row.id)
-                                        }
-                                        className="bg-primary text-white hover:bg-primary/90"
-                                      >
-                                        Convert
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              )}
-
-                            {hasAction(
-                              permissions,
-                              "manageInquiry",
-                              "update"
-                            ) && (
-                              <Link href={`/inquiries/${row.id}`}>
+                            {/* Replace all action icon buttons with a dropdown menu */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="gap-2"
+                                  size="icon"
+                                  className="text-muted-foreground"
+                                  aria-label="Actions"
                                 >
-                                  <Edit className="h-4 w-4" />
-                                  Edit
+                                  <MoreVertical className="h-4 w-4" />
                                 </Button>
-                              </Link>
-                            )}
-                           {canAssignInquiry &&  (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedInquiry(row.id);
-                                setAssignOpen(true);
-                              }}
-                            >
-                              Assign Users
-                            </Button>
-                          )}
-                            {hasAction(
-                              permissions,
-                              "manageInquiry",
-                              "delete"
-                            ) && (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="gap-2 text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    Delete
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Are you absolutely sure?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. This will
-                                      permanently delete the inquiry for{" "}
-                                      {row.customerName}.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDelete(row.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {/* Convert To Lead */}
+                                {hasAction(
+                                  permissions,
+                                  "manageInquiry",
+                                  "update"
+                                ) &&
+                                  !row.isConvertedToLead &&
+                                  (row.status === "new" ||
+                                    row.status === "contacted") && (
+                                    <AlertDialog
+                                      open={
+                                        convertDialogOpen && convertRow?.id === row.id
+                                      }
+                                      onOpenChange={(open) => {
+                                        if (open) {
+                                          setConvertDialogOpen(true);
+                                          setConvertRow(row);
+                                        } else {
+                                          setConvertDialogOpen(false);
+                                          setConvertRow(null);
+                                        }
+                                      }}
                                     >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
+                                      <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem
+                                          onSelect={e => {
+                                            // Prevent closing the dropdown before dialog appears
+                                            e.preventDefault();
+                                            setConvertDialogOpen(true);
+                                            setConvertRow(row);
+                                          }}
+                                        >
+                                          <ArrowRightCircle className="mr-2 h-4 w-4 text-green-600" />
+                                          Convert to Lead
+                                        </DropdownMenuItem>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Convert to Lead?
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will create a Lead from{" "}
+                                            <strong>{row.customerName}</strong>{" "}
+                                            inquiry and update its status.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Cancel
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => {
+                                              setConvertDialogOpen(false);
+                                              setConvertRow(null);
+                                              handleConvertToLead(row.id)
+                                            }}
+                                            className="bg-primary text-white hover:bg-primary/90"
+                                          >
+                                            Convert
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+
+                                {/* Edit */}
+                                {hasAction(
+                                  permissions,
+                                  "manageInquiry",
+                                  "update"
+                                ) && (
+                                  <Link href={`/inquiries/${row.id}`} passHref legacyBehavior>
+                                    <DropdownMenuItem asChild>
+                                      <a>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit
+                                      </a>
+                                    </DropdownMenuItem>
+                                  </Link>
+                                )}
+
+                                {/* Assign Users */}
+                                {canAssignInquiry && (
+                                  <DropdownMenuItem
+                                    onSelect={e => {
+                                      e.preventDefault();
+                                      setSelectedInquiry(row.id);
+                                      setAssignOpen(true);
+                                    }}
+                                  >
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Assign Users
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Delete */}
+                                {hasAction(
+                                  permissions,
+                                  "manageInquiry",
+                                  "delete"
+                                ) && (
+                                  <AlertDialog
+                                    open={
+                                      deleteDialogOpen && deleteRow?.id === row.id
+                                    }
+                                    onOpenChange={(open) => {
+                                      if (open) {
+                                        setDeleteDialogOpen(true);
+                                        setDeleteRow(row);
+                                      } else {
+                                        setDeleteDialogOpen(false);
+                                        setDeleteRow(null);
+                                      }
+                                    }}
+                                  >
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive"
+                                        onSelect={e => {
+                                          e.preventDefault();
+                                          setDeleteDialogOpen(true);
+                                          setDeleteRow(row);
+                                        }}
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Are you absolutely sure?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This action cannot be undone. This will
+                                          permanently delete the inquiry for{" "}
+                                          {row.customerName}.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Cancel
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => {
+                                            setDeleteDialogOpen(false);
+                                            setDeleteRow(null);
+                                            handleDelete(row.id)
+                                          }}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
