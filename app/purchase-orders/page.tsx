@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Search } from "lucide-react";
 
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
@@ -11,12 +11,7 @@ import { hasAction } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -92,11 +87,15 @@ export default function PurchaseOrderList() {
   });
 
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"all" | "draft" | "approved" | "completed">("all");
+  const [status, setStatus] = useState<
+    "all" | "draft" | "approved" | "completed"
+  >("all");
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [poToAssign, setPoToAssign] = useState<PurchaseOrder | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const canAssign =
     user?.systemrole === "SuperAdmin" ||
@@ -106,9 +105,14 @@ export default function PurchaseOrderList() {
   /* ---------------- FETCH ---------------- */
 
   const fetchOrders = async (page = 1) => {
-    const res = await api.get(`/api/purchase-orders?page=${page}&limit=10`);
-    setOrders(res.data.data || []);
-    setPagination(res.data.pagination);
+    setIsLoading(true);
+    try {
+      const res = await api.get(`/api/purchase-orders?page=${page}&limit=10`);
+      setOrders(res.data.data || []);
+      setPagination(res.data.pagination);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -144,161 +148,183 @@ export default function PurchaseOrderList() {
 
   return (
     <div className="p-4 md:p-6 max-w-8xl mx-auto space-y-4">
-      <Card>
-        <CardHeader className="space-y-4">
-          <CardTitle className="text-2xl">Purchase Orders</CardTitle>
+      {/* <Card>
+        <CardHeader className="space-y-4"> */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        <h1 className="text-2xl font-semibold">Purchase Orders</h1>
 
-          {/* SEARCH + STATUS */}
-          <div className="flex flex-col md:flex-row gap-3">
-            <Input
-              placeholder="Search by PO or Customer..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="md:max-w-sm"
-            />
+        {/* SEARCH + STATUS + REFRESH */}
+        
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full md:w-auto items-stretch">
+          <div className="flex flex-1 items-stretch gap-2 w-full">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                placeholder="Search by PO or Customer..."
+                className="pl-10 w-full"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-            <Select
-              value={status}
-              onValueChange={(v) => setStatus(v as any)}
+            <div className="w-44 min-w-[8rem]">
+              <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fetchOrders(pagination.page)}
+              disabled={isLoading}
+              aria-label="Refresh purchase orders"
             >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" strokeDasharray="22" strokeDashoffset="10"></circle></svg>
+                  Refreshing...
+                </span>
+              ) : (
+                "Refresh"
+              )}
+            </Button>
           </div>
-        </CardHeader>
+        </div>
+      </div>
+      {/* </CardHeader> */}
 
-        <CardContent>
-          {/* DESKTOP TABLE */}
-          <div className="hidden md:block border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead>Sr.No</TableHead>
-                  <TableHead>PO Number</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Quotation</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
+      {/* <CardContent> */}
+      {/* DESKTOP TABLE */}
+      <div className="hidden md:block border rounded-md shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <TableHead>Sr.No</TableHead>
+              <TableHead>PO Number</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Quotation</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead >Action</TableHead>
+            </TableRow>
+          </TableHeader>
 
-              <TableBody>
-                {filteredOrders.map((po, i) => (
-                  <TableRow key={po.id}>
-                    <TableCell>{i + 1}</TableCell>
-                    <TableCell>{po.poNumber}</TableCell>
-                    <TableCell>{po.customerDetails.customerName}</TableCell>
-                    <TableCell>{po.quotationId?.quoteId || "-"}</TableCell>
-                    <TableCell>
-                      <Badge className="capitalize">{po.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/purchase-orders/${po.id}`)
-                            }
-                          >
-                            View
-                          </DropdownMenuItem>
+          <TableBody>
+            {filteredOrders.map((po, i) => (
+              <TableRow key={po.id}>
+                <TableCell>{i + 1}</TableCell>
+                <TableCell>{po?.poNumber}</TableCell>
+                <TableCell>{po?.customerDetails?.customerName}</TableCell>
+                <TableCell>{po?.customerDetails?.phoneNumber}</TableCell>
+                <TableCell>{po?.quotationId?.quoteId || "-"}</TableCell>
+                <TableCell>
+                  <Badge className="capitalize">{po?.status}</Badge>
+                </TableCell>
+                <TableCell >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/purchase-orders/${po.id}`)}
+                      >
+                        View details
+                      </DropdownMenuItem>
 
-                          {canAssign && (
-                            <DropdownMenuItem
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                setPoToAssign(po);
-                                setAssignOpen(true);
-                              }}
-                            >
-                              Assign
-                            </DropdownMenuItem>
-                          )}
+                      {canAssign && (
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setPoToAssign(po);
+                            setAssignOpen(true);
+                          }}
+                        >
+                          Assign PO
+                        </DropdownMenuItem>
+                      )}
 
-                          {po.poPdf?.s3Url && (
-                            <DropdownMenuItem asChild>
-                              <a href={po.poPdf.s3Url} target="_blank">
-                                View PDF
-                              </a>
-                            </DropdownMenuItem>
-                          )}
+                      {po.poPdf?.s3Url && (
+                        <DropdownMenuItem asChild>
+                          <a href={po.poPdf.s3Url} target="_blank">
+                            View PDF
+                          </a>
+                        </DropdownMenuItem>
+                      )}
 
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeleteId(po.id)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* MOBILE CARDS */}
-          <div className="md:hidden space-y-3">
-            {filteredOrders.map((po) => (
-              <Card key={po.id}>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <div className="font-semibold">{po.poNumber}</div>
-                    <Badge className="capitalize">{po.status}</Badge>
-                  </div>
-                  <div className="text-sm">
-                    Customer: {po.customerDetails.customerName}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      router.push(`/purchase-orders/${po.id}`)
-                    }
-                  >
-                    View Details
-                  </Button>
-                </CardContent>
-              </Card>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteId(po.id)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
             ))}
-          </div>
+          </TableBody>
+        </Table>
+      </div>
 
-          {/* PAGINATION */}
-          <div className="flex justify-between items-center mt-4">
-            <Button
-              variant="outline"
-              disabled={pagination.page === 1}
-              onClick={() => fetchOrders(pagination.page - 1)}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              disabled={pagination.page === pagination.totalPages}
-              onClick={() => fetchOrders(pagination.page + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* MOBILE CARDS */}
+      <div className="md:hidden space-y-3">
+        {filteredOrders.map((po) => (
+          <Card key={po.id}>
+            <CardContent className="p-4 space-y-2">
+              <div className="flex justify-between">
+                <div className="font-semibold">{po.poNumber}</div>
+                <Badge className="capitalize">{po.status}</Badge>
+              </div>
+              <div className="text-sm">
+                Customer: {po.customerDetails.customerName}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => router.push(`/purchase-orders/${po.id}`)}
+              >
+                View Details
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex justify-between items-center mt-4">
+        <Button
+          variant="outline"
+          disabled={pagination.page === 1}
+          onClick={() => fetchOrders(pagination.page - 1)}
+        >
+          Previous
+        </Button>
+        <span className="text-sm">
+          Page {pagination.page} of {pagination.totalPages}
+        </span>
+        <Button
+          variant="outline"
+          disabled={pagination.page === pagination.totalPages}
+          onClick={() => fetchOrders(pagination.page + 1)}
+        >
+          Next
+        </Button>
+      </div>
+      {/* </CardContent>
+      </Card> */}
 
       {/* DELETE */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

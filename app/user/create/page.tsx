@@ -112,37 +112,23 @@ export default function CreateUserPage() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Create New User</h1>
-        <p className="text-muted-foreground mt-2">
-          Add a new user and configure their access permissions
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        {/* ================= User Details Card ================= */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              User Information
-            </CardTitle>
-            <CardDescription>
-              Enter the basic details for the new user account
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
+    <div className="container max-w-8xl mx-auto py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight">Create New User</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+            {/* ================= User Details ================= */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="name"
                     placeholder="Enter Name"
-                    className="pl-10"
                     {...register("name")}
                     required
                   />
@@ -152,12 +138,10 @@ export default function CreateUserPage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="abc@example.com"
-                    className="pl-10"
                     {...register("email")}
                     required
                   />
@@ -167,11 +151,9 @@ export default function CreateUserPage() {
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="phone"
                     placeholder="123456890"
-                    className="pl-10"
                     {...register("phone")}
                     required
                   />
@@ -181,12 +163,10 @@ export default function CreateUserPage() {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10"
                     {...register("password")}
                     required
                   />
@@ -204,7 +184,7 @@ export default function CreateUserPage() {
                       value={field.value}
                       disabled={loading}
                     >
-                      <SelectTrigger id="role" className="w-full">
+                      <SelectTrigger id="role" className="w-48">
                         <SelectValue placeholder="Select user role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -219,137 +199,135 @@ export default function CreateUserPage() {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <Separator className="my-8" />
 
-        {/* ================= Permissions Card ================= */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Access Permissions
-            </CardTitle>
-            <CardDescription>
-              Configure module access and specific actions for this user
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            <div className="space-y-6">
-              {modules.map((mod, index) => (
-                <div key={mod.key}>
-                  <div className="space-y-4">
-                    {/* Module Toggle */}
-                    <div className="flex items-center gap-3">
-                      <Controller
-                        name={`permissions.${mod.key}`}
-                        control={control}
-                        render={({ field }) => (
-                          <Checkbox
-                            id={mod.key}
-                            checked={field.value}
-                            onCheckedChange={(checked) => {
-                              field.onChange(checked);
-                              if (mod.actionKey) {
-                                setValue(`permissions.${mod.actionKey}.read`, !!checked, { shouldDirty: true, shouldTouch: true });
-                              }
-                            }}
-                          />
-                        )}
-                      />
-                      <Label
-                        htmlFor={mod.key}
-                        className="text-base font-medium cursor-pointer"
-                      >
-                        {mod.label}
-                      </Label>
-                    </div>
-
-                    {/* CRUD Actions */}
-                    {mod.actionKey && watchedPermissions[mod.key] && (
-                      <div className="ml-7 p-4 rounded-lg bg-muted/50 border">
-                        <p className="text-sm font-medium mb-3 text-muted-foreground">
-                          Allowed Actions
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          {Object.keys(CRUDActionsTemplate).map((action) => (
-                            <Controller
-                              key={action}
-                              name={`permissions.${mod.actionKey}.${action}`}
-                              control={control}
-                              render={({ field }) => {
-                                if (action === "read") {
-                                  return (
-                                    <div className="flex items-center gap-2">
-                                      <Checkbox
-                                        id={`${mod.actionKey}-${action}`}
-                                        checked={true}
-                                        disabled={watchedPermissions[mod.key]}
-                                        onCheckedChange={() => {
-                                          handleReadActionChange(mod, !watchedPermissions[mod.actionKey]?.read);
-                                        }}
-                                      />
-                                      <Label
-                                        htmlFor={`${mod.actionKey}-${action}`}
-                                        className="text-sm font-normal cursor-pointer capitalize"
-                                      >
-                                        {action}
-                                      </Label>
-                                    </div>
-                                  );
-                                } else {
-                                  return (
-                                    <div className="flex items-center gap-2">
-                                      <Checkbox
-                                        id={`${mod.actionKey}-${action}`}
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                      <Label
-                                        htmlFor={`${mod.actionKey}-${action}`}
-                                        className="text-sm font-normal cursor-pointer capitalize"
-                                      >
-                                        {action}
-                                      </Label>
-                                    </div>
-                                  );
+            {/* ================= Permissions Section ================= */}
+            <div>
+              <div className="mb-6">
+                <span className="text-lg font-semibold flex items-center gap-2">
+                  {/* <Shield className="h-5 w-5" /> */}
+                  Access Permissions
+                </span>
+                {/* <CardDescription>
+                  Configure module access and specific actions for this user
+                </CardDescription> */}
+              </div>
+              <div className="space-y-6">
+                {modules.map((mod, index) => (
+                  <div key={mod.key}>
+                    <div className="space-y-4">
+                      {/* Module Toggle */}
+                      <div className="flex items-center gap-3">
+                        <Controller
+                          name={`permissions.${mod.key}`}
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id={mod.key}
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (mod.actionKey) {
+                                  setValue(`permissions.${mod.actionKey}.read`, !!checked, { shouldDirty: true, shouldTouch: true });
                                 }
                               }}
                             />
-                          ))}
-                        </div>
+                          )}
+                        />
+                        <Label
+                          htmlFor={mod.key}
+                          className="text-base font-medium cursor-pointer"
+                        >
+                          {mod.label}
+                        </Label>
                       </div>
-                    )}
+
+                      {/* CRUD Actions */}
+                      {mod.actionKey && watchedPermissions[mod.key] && (
+                        <div className="ml-7 p-4 rounded-lg bg-muted/50 border">
+                          <p className="text-sm font-medium mb-3 text-muted-foreground">
+                            Allowed Actions
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {Object.keys(CRUDActionsTemplate).map((action) => (
+                              <Controller
+                                key={action}
+                                name={`permissions.${mod.actionKey}.${action}`}
+                                control={control}
+                                render={({ field }) => {
+                                  if (action === "read") {
+                                    return (
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          id={`${mod.actionKey}-${action}`}
+                                          checked={true}
+                                          disabled={watchedPermissions[mod.key]}
+                                          onCheckedChange={() => {
+                                            handleReadActionChange(mod, !watchedPermissions[mod.actionKey]?.read);
+                                          }}
+                                        />
+                                        <Label
+                                          htmlFor={`${mod.actionKey}-${action}`}
+                                          className="text-sm font-normal cursor-pointer capitalize"
+                                        >
+                                          {action}
+                                        </Label>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          id={`${mod.actionKey}-${action}`}
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
+                                        <Label
+                                          htmlFor={`${mod.actionKey}-${action}`}
+                                          className="text-sm font-normal cursor-pointer capitalize"
+                                        >
+                                          {action}
+                                        </Label>
+                                      </div>
+                                    );
+                                  }
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {index < modules.length - 1 && <Separator className="mt-6" />}
                   </div>
-
-                  {index < modules.length - 1 && <Separator className="mt-6" />}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* ================= Action Buttons ================= */}
-        <div className="flex gap-4 justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            onClick={() => router.push("/admin/users")}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            size="lg"
-            disabled={loading}
-            className="min-w-[140px]"
-          >
-            {loading ? "Creating..." : "Create User"}
-          </Button>
-        </div>
-      </form>
+            {/* ================= Action Buttons ================= */}
+            <div className="flex gap-4 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => router.push("/admin/users")}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading}
+                className="min-w-[140px]"
+              >
+                {loading ? "Creating..." : "Create User"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

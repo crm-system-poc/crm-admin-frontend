@@ -465,7 +465,7 @@ export default function LeadsPage() {
     data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
-  });
+  }); 
 
   return (
     <div className="p-6 max-w-8xl mx-auto space-y-4">

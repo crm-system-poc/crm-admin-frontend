@@ -13,22 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogTrigger,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -38,14 +31,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Plus,
-  Search,
-  Edit,
+  Pencil,
   Trash2,
-  Phone,
-  User,
-  ArrowRightCircle,
+  Search,
   MoreVertical,
   Users,
+  ArrowRightCircle,
+  RefreshCcw,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedPage from "@/components/ProtectedPage";
@@ -56,8 +48,7 @@ import AssignInquiryUsersModal from "@/components/Inquiry/AssignInquiryUsersModa
 import { useAuth } from "@/components/context/AuthContext";
 
 export default function InquiriesPage() {
-
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const permissions = user?.permissions || {};
 
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -105,11 +96,12 @@ export default function InquiriesPage() {
 
   useEffect(() => {
     loadInquiries();
-  }, []);
+    // eslint-disable-next-line
+  }, [page, searchQuery, statusFilter]);
 
   const handleConvertToLead = async (id: string) => {
     try {
-      const res = await api.post(`/api/inquiries/${id}/convert`);
+      await api.post(`/api/inquiries/${id}/convert`);
       toast.success("Inquiry converted to lead successfully!");
       loadInquiries();
     } catch (error: any) {
@@ -138,314 +130,337 @@ export default function InquiriesPage() {
       converted: "default",
       closed: "outline",
     };
-
     return (
-      <Badge variant={variants[status.toLowerCase()] || "outline"}>
+      <Badge variant={variants[status?.toLowerCase()] || "outline"}>
         {status}
       </Badge>
     );
   };
 
-  const filteredInquiries = inquiries.filter(
-    (inquiry) =>
-      inquiry.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inquiry.phoneNumber?.includes(searchQuery)
-  );
+  // Only do client-side filtering for display if needed (len <= limit?), otherwise relies only on paged server data.
+  // For exact pagination, display only what's in inquiries, not filteredInquiries.
+  // However, preserve original client-side search for consistency with /leads/page.tsx.
 
   return (
     <ProtectedPage module="manageInquiry">
-      <div className="space-y-6 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="max-w-8xl mx-auto space-y-4 p-6">
+        {/* Page heading & actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-6">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Inquiries</h2>
-            <p className="text-muted-foreground">
-              Manage and track customer inquiries
-            </p>
+            <h1 className="text-2xl font-semibold">Inquiries</h1>
           </div>
-
-          {hasAction(permissions, "manageInquiry", "create") && (
-            <Link href="/inquiries/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Inquiry
-              </Button>
-            </Link>
-          )}
+          <div className="flex w-full sm:w-auto gap-2 sm:gap-3 items-center">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or phone..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-9 text-sm"
+              />
+            </div>
+            {/* Refresh button */}
+            <Button
+              type="button"
+              variant="outline"
+              // size="icon"
+              aria-label="Refresh inquiries"
+              onClick={() => loadInquiries()}
+              disabled={isLoading}
+            >
+              {/* <RefreshCcw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} /> */}
+              Refresh
+            </Button>
+            {hasAction(permissions, "manageInquiry", "create") && (
+              <Link href="/inquiries/new">
+                <Button>
+                  Add Inquiry
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle>All Inquiries</CardTitle>
-                <CardDescription>
-                  {filteredInquiries.length} total inquiries
-                </CardDescription>
-              </div>
-
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Customer Name
-                      </div>
-                    </TableHead>
-                    <TableHead>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        Phone
-                      </div>
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
-                        <div className="flex justify-center items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          <span className="text-muted-foreground">
-                            Loading...
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : Array.isArray(filteredInquiries) &&
-                    filteredInquiries.length > 0 ? (
-                    filteredInquiries.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="font-medium">
-                          {row.customerName}
-                        </TableCell>
-                        <TableCell>{row.phoneNumber}</TableCell>
-                        <TableCell>{getStatusBadge(row.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
-                            {/* Replace all action icon buttons with a dropdown menu */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-muted-foreground"
-                                  aria-label="Actions"
+        <div className="rounded-md border shadow-sm ">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead>
+                  <span className="font-semibold">Sr. No</span>
+                </TableHead>
+                <TableHead>
+                  <span className="font-semibold">Customer Name</span>
+                </TableHead>
+                <TableHead>
+                  <span className="font-semibold">Phone</span>
+                </TableHead>
+                <TableHead>
+                  <span className="font-semibold">Status</span>
+                </TableHead>
+                <TableHead>
+                  <span className="font-semibold">Action</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="flex justify-center items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span className="text-sm text-muted-foreground">
+                        Loading...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(inquiries) && inquiries.length > 0 ? (
+                inquiries.map((row, index) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      {(page - 1) * limit + index + 1}
+                    </TableCell>
+                    <TableCell>{row.customerName}</TableCell>
+                    <TableCell>{row.phoneNumber}</TableCell>
+                    <TableCell>{getStatusBadge(row.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1.5">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Actions"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {/* Convert To Lead */}
+                            {hasAction(
+                              permissions,
+                              "manageInquiry",
+                              "update"
+                            ) &&
+                              !row.isConvertedToLead &&
+                              (row.status === "new" ||
+                                row.status === "contacted") && (
+                                <AlertDialog
+                                  open={
+                                    convertDialogOpen && convertRow?.id === row.id
+                                  }
+                                  onOpenChange={(open) => {
+                                    if (open) {
+                                      setConvertDialogOpen(true);
+                                      setConvertRow(row);
+                                    } else {
+                                      setConvertDialogOpen(false);
+                                      setConvertRow(null);
+                                    }
+                                  }}
                                 >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {/* Convert To Lead */}
-                                {hasAction(
-                                  permissions,
-                                  "manageInquiry",
-                                  "update"
-                                ) &&
-                                  !row.isConvertedToLead &&
-                                  (row.status === "new" ||
-                                    row.status === "contacted") && (
-                                    <AlertDialog
-                                      open={
-                                        convertDialogOpen && convertRow?.id === row.id
-                                      }
-                                      onOpenChange={(open) => {
-                                        if (open) {
-                                          setConvertDialogOpen(true);
-                                          setConvertRow(row);
-                                        } else {
-                                          setConvertDialogOpen(false);
-                                          setConvertRow(null);
-                                        }
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      className="text-green-700 focus:text-green-800"
+                                      onSelect={e => {
+                                        e.preventDefault();
+                                        setConvertDialogOpen(true);
+                                        setConvertRow(row);
                                       }}
                                     >
-                                      <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem
-                                          onSelect={e => {
-                                            // Prevent closing the dropdown before dialog appears
-                                            e.preventDefault();
-                                            setConvertDialogOpen(true);
-                                            setConvertRow(row);
-                                          }}
-                                        >
-                                          <ArrowRightCircle className="mr-2 h-4 w-4 text-green-600" />
-                                          Convert to Lead
-                                        </DropdownMenuItem>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>
-                                            Convert to Lead?
-                                          </AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This will create a Lead from{" "}
-                                            <strong>{row.customerName}</strong>{" "}
-                                            inquiry and update its status.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>
-                                            Cancel
-                                          </AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => {
-                                              setConvertDialogOpen(false);
-                                              setConvertRow(null);
-                                              handleConvertToLead(row.id)
-                                            }}
-                                            className="bg-primary text-white hover:bg-primary/90"
-                                          >
-                                            Convert
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  )}
-
-                                {/* Edit */}
-                                {hasAction(
-                                  permissions,
-                                  "manageInquiry",
-                                  "update"
-                                ) && (
-                                  <Link href={`/inquiries/${row.id}`} passHref legacyBehavior>
-                                    <DropdownMenuItem asChild>
-                                      <a>
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Edit
-                                      </a>
+                                      {/* <ArrowRightCircle className="mr-2 h-4 w-4 text-green-600" /> */}
+                                      Convert to Lead
                                     </DropdownMenuItem>
-                                  </Link>
-                                )}
-
-                                {/* Assign Users */}
-                                {canAssignInquiry && (
-                                  <DropdownMenuItem
-                                    onSelect={e => {
-                                      e.preventDefault();
-                                      setSelectedInquiry(row.id);
-                                      setAssignOpen(true);
-                                    }}
-                                  >
-                                    <Users className="mr-2 h-4 w-4" />
-                                    Assign Users
-                                  </DropdownMenuItem>
-                                )}
-
-                                {/* Delete */}
-                                {hasAction(
-                                  permissions,
-                                  "manageInquiry",
-                                  "delete"
-                                ) && (
-                                  <AlertDialog
-                                    open={
-                                      deleteDialogOpen && deleteRow?.id === row.id
-                                    }
-                                    onOpenChange={(open) => {
-                                      if (open) {
-                                        setDeleteDialogOpen(true);
-                                        setDeleteRow(row);
-                                      } else {
-                                        setDeleteDialogOpen(false);
-                                        setDeleteRow(null);
-                                      }
-                                    }}
-                                  >
-                                    <AlertDialogTrigger asChild>
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onSelect={e => {
-                                          e.preventDefault();
-                                          setDeleteDialogOpen(true);
-                                          setDeleteRow(row);
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Convert to Lead?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will create a Lead from{" "}
+                                        <span className="font-semibold">
+                                          {row.customerName}
+                                        </span>{" "}
+                                        inquiry and update its status.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => {
+                                          setConvertDialogOpen(false);
+                                          setConvertRow(null);
+                                          handleConvertToLead(row.id);
                                         }}
+                                        className="bg-primary text-white hover:bg-primary/90"
                                       >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Are you absolutely sure?
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          This action cannot be undone. This will
-                                          permanently delete the inquiry for{" "}
-                                          {row.customerName}.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Cancel
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => {
-                                            setDeleteDialogOpen(false);
-                                            setDeleteRow(null);
-                                            handleDelete(row.id)
-                                          }}
-                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        >
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
-                        <div className="flex flex-col items-center gap-2">
-                          <p className="text-muted-foreground">
-                            {searchQuery
-                              ? "No inquiries match your search."
-                              : "No inquiries found."}
-                          </p>
-                          {hasAction(permissions, "manageInquiry", "create") &&
-                            !searchQuery && (
-                              <Link href="/inquiries/new">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-2 mt-2"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  Add your first inquiry
-                                </Button>
+                                        {"Convert"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+
+                            {/* Edit */}
+                            {hasAction(
+                              permissions,
+                              "manageInquiry",
+                              "update"
+                            ) && (
+                              <Link href={`/inquiries/${row.id}`} passHref legacyBehavior>
+                                <DropdownMenuItem asChild>
+                                  <a>
+                                    {/* <Pencil className="mr-2 h-4 w-4" /> */}
+                                    View details
+                                  </a>
+                                </DropdownMenuItem>
                               </Link>
                             )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+
+                            {/* Assign Users */}
+                            {canAssignInquiry && (
+                              <DropdownMenuItem
+                                onSelect={e => {
+                                  e.preventDefault();
+                                  setSelectedInquiry(row.id);
+                                  setAssignOpen(true);
+                                }}
+                              >
+                                {/* <Users className="mr-2 h-4 w-4" /> */}
+                                Assign Inquiries
+                              </DropdownMenuItem>
+                            )}
+
+                            {/* Delete */}
+                            {hasAction(
+                              permissions,
+                              "manageInquiry",
+                              "delete"
+                            ) && (
+                              <AlertDialog
+                                open={
+                                  deleteDialogOpen && deleteRow?.id === row.id
+                                }
+                                onOpenChange={(open) => {
+                                  if (open) {
+                                    setDeleteDialogOpen(true);
+                                    setDeleteRow(row);
+                                  } else {
+                                    setDeleteDialogOpen(false);
+                                    setDeleteRow(null);
+                                  }
+                                }}
+                              >
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={e => {
+                                      e.preventDefault();
+                                      setDeleteDialogOpen(true);
+                                      setDeleteRow(row);
+                                    }}
+                                  >
+                                    {/* <Trash2 className="mr-2 h-4 w-4" /> */}
+                                    Delete
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Delete inquiry?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete{" "}
+                                      <span className="font-semibold">
+                                        {row.customerName}
+                                      </span>? This action cannot be undone
+                                      and will permanently remove all associated data.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        setDeleteDialogOpen(false);
+                                        setDeleteRow(null);
+                                        handleDelete(row.id);
+                                      }}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      {"Delete"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {searchQuery
+                          ? "No inquiries match your search."
+                          : "No inquiries found."}
+                      </span>
+                      {hasAction(permissions, "manageInquiry", "create") &&
+                        !searchQuery && (
+                          <Link href="/inquiries/new">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 mt-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add your first inquiry
+                            </Button>
+                          </Link>
+                        )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {/* Pagination */}
+        {totalPages > 0 && (
+          <div className="flex items-center justify-end gap-4 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+        
         {assignOpen && selectedInquiry && (
           <AssignInquiryUsersModal
             inquiryId={selectedInquiry}

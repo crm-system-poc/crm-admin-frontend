@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -11,7 +11,17 @@ import {
   TableCell,
   TableBody,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  MoreVertical,
+  RefreshCcw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Pagination,
@@ -36,6 +46,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { hasModule, hasAction } from "@/lib/permissions";
 import { useAuth } from "@/components/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -47,7 +69,8 @@ export default function ProductsPage() {
   // Filters
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-  const [oem, setOem] = useState("");
+  // Set default oem to '__all__'
+  const [oem, setOem] = useState("__all__");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
 
@@ -73,6 +96,11 @@ export default function ProductsPage() {
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // For refresh: allow manual triggering
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Fetch products (with filter and pagination)
   useEffect(() => {
     const fetchProducts = async () => {
@@ -83,8 +111,8 @@ export default function ProductsPage() {
         params.set("page", String(page));
         params.set("limit", String(limit));
         if (search) params.set("search", search);
-        if (category) params.set("category", category);
-        if (oem) params.set("oem", oem);
+        if (category && category !== "__all__") params.set("category", category);
+        if (oem && oem !== "__all__") params.set("oem", oem);
 
         const res = await fetch(`http://localhost:8080/api/products?${params.toString()}`, {
           method: "GET",
@@ -109,10 +137,18 @@ export default function ProductsPage() {
         setError(err?.message || "An error occurred");
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
     fetchProducts();
-  }, [search, category, oem, page, limit]);
+    // Cleanup refresh animation if any
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line
+  }, [search, category, oem, page, limit, refreshCounter]);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -147,6 +183,15 @@ export default function ProductsPage() {
     };
     fetchFilterOptions();
   }, []);
+
+  // Refresh button handler
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setRefreshCounter((c) => c + 1);
+    // If not done in 5 sec, stop spinner
+    if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    refreshTimeoutRef.current = setTimeout(() => setRefreshing(false), 5000);
+  };
 
   // Helper to display price as currency
   const renderPrice = (price: any) => {
@@ -215,12 +260,9 @@ export default function ProductsPage() {
       if (!res.ok) {
         throw new Error("Failed to delete product");
       }
-      // After deletion, refresh data by refetching products
       setDeleteDialogId(null);
-      // Soft way: re-call the fetch of products by resetting page (forces useEffect)
-      // If currently on page 1 just trick the useEffect (force update) by toggling page.
-      setTimeout(() => setPage((p) => (p === 1 ? 2 : 1)), 0); // Toggle to trigger useEffect
-      setTimeout(() => setPage((p) => (p === 1 ? 1 : p)), 10); // Go back to the correct page after
+      setTimeout(() => setPage((p) => (p === 1 ? 2 : 1)), 0);
+      setTimeout(() => setPage((p) => (p === 1 ? 1 : p)), 10);
     } catch (err: any) {
       setError(err?.message || "Failed to delete product");
     } finally {
@@ -247,31 +289,19 @@ export default function ProductsPage() {
 
   return (
     <main className="p-6 max-w-8xl mx-auto space-y-6">
-      {/* Page Title & Add */}
+      {/* Page Title, Add & Search beside Add */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Products
         </h1>
-        {hasAction(user?.permissions, "manageProducts", "create") && (
-        <Button
-          className="gap-2 bg-pink-600 hover:bg-pink-700 rounded-lg shadow"
-          size="sm"
-          onClick={() => router.push("/products/add")}
-        >
-          <Plus size={18} /> Add Product
-        </Button>
-        )}
-      </div>
-      <Separator />
-
-      {/* Filter Row */}
-      <div className="flex flex-col md:flex-row md:gap-4 gap-2 items-stretch md:items-end mb-3">
-        <div className="w-full md:max-w-xs">
-          <label htmlFor="search" className="block text-sm mb-1 pl-0.5 text-gray-700">Search</label>
-          <input
+        <div className="flex gap-2 items-center">
+        <div className="flex flex-col md:flex-row md:gap-4 gap-2 items-stretch md:items-end">
+       
+        <div className="w-full md:max-w-xs block md:hidden">
+          <Label htmlFor="search" className="block text-sm mb-1 text-gray-700">Search</Label>
+          <Input
             id="search"
             type="search"
-            className="block w-full border rounded-md py-2 px-2 text-base focus:outline-none focus:ring-2 focus:ring-pink-400"
             value={search}
             placeholder="Name, Code, ID, Description…"
             onChange={e => {
@@ -280,39 +310,82 @@ export default function ProductsPage() {
             }}
           />
         </div>
-        <div className="w-full md:max-w-xs flex flex-col">
-          <label htmlFor="category" className="text-sm mb-1 text-gray-700">Category</label>
-          <select
-            id="category"
-            className="border rounded-md py-2 px-2 text-base"
-            value={category}
-            onChange={e => {
+        <div>
+          {/* <Label htmlFor="category" className="text-sm mb-1 text-gray-700">Category</Label> */}
+          <Select
+            value={category === "" ? "__all__" : category}
+            onValueChange={value => {
               setPage(1);
-              setCategory(e.target.value);
+              setCategory(value === "__all__" ? "" : value);
             }}
           >
-            <option value="">All</option>
-            {categoryOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+            <SelectTrigger id="category" className="min-w-[160px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {categoryOptions.map(opt => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="w-full md:max-w-xs flex flex-col">
-          <label htmlFor="oem" className="text-sm mb-1 text-gray-700">OEM</label>
-          <select
-            id="oem"
-            className="border rounded-md py-2 px-2 text-base"
+          {/* <Label htmlFor="oem" className="text-sm mb-1 text-gray-700">OEM</Label> */}
+          <Select
             value={oem}
-            onChange={e => {
+            onValueChange={value => {
               setPage(1);
-              setOem(e.target.value);
+              setOem(value);
             }}
           >
-            <option value="">All</option>
-            {oemOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+            <SelectTrigger id="oem">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All</SelectItem>
+              {oemOptions.map(opt => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+          <Input
+            id="search-top"
+            type="search"
+            className="w-48 sm:w-64"
+            value={search}
+            placeholder="Search products…"
+            onChange={e => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
+          />
+          <Button
+            variant="outline"
+            // size="icon"
+            aria-label="Refresh"
+            // className={
+            //   "flex items-center justify-center" +
+            //   (refreshing ? " animate-spin" : "")
+            // }
+            disabled={loading || refreshing}
+            style={{ minWidth: "2.5rem", minHeight: "2.5rem" }}
+            onClick={handleRefresh}
+            title="Refresh products list"
+          >
+            <RefreshCcw className={"h-5 w-5 " + (refreshing ? "animate-spin" : "")} />
+            Refresh
+          </Button>
+          {hasAction(user?.permissions, "manageProducts", "create") && (
+            <Button
+             
+              onClick={() => router.push("/products/add")}
+            >
+              Add Product
+            </Button>
+          )}
         </div>
       </div>
 
@@ -355,39 +428,50 @@ export default function ProductsPage() {
                   <TableCell>{product.productName || product.name || "--"}</TableCell>
                   <TableCell>{product.productCode || product.code || "--"}</TableCell>
                   <TableCell>{product.category || "--"}</TableCell>
-                  <TableCell>{product.oem || "--"}</TableCell>
+                  {/* If oem is empty or null show '--' */}
+                  <TableCell>{(product.oem && product.oem !== "") ? product.oem : "--"}</TableCell>
                   <TableCell className="max-w-xs truncate">{product.description || "--"}</TableCell>
                   <TableCell>{renderPrice(product.oemPrice)}</TableCell>
                   <TableCell>{renderPrice(product.sellingPrice)}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center">
-                    {hasAction(user.permissions, "manageProducts", "update") && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(product)}
-                        aria-label="Edit"
-                      >
-                        <Pencil className="h-6 w-6 text-blue-500" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                    )}
-                      {/* DELETE BUTTON OPENS DIALOG */}
-                      {hasAction(user.permissions, "manageProducts", "delete") && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={e => {
-                          e.stopPropagation();
-                          handleDelete(product);
-                        }}
-                        aria-label="Delete"
-                        disabled={!!deleteDialogId}
-                      >
-                        <Trash2 className="h-6 w-6 text-red-600" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="More Actions"
+                            className="flex items-center justify-center"
+                          >
+                            <MoreVertical className="h-6 w-6" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {hasAction(user.permissions, "manageProducts", "update") && (
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(product)}
+                            >
+                              View details
+                            </DropdownMenuItem>
+                          )}
+                          {/* {hasAction(user.permissions, "manageProducts", "update") &&
+                            // hasAction(user.permissions, "manageProducts", "delete") && (
+                            //   // <DropdownMenuSeparator />
+                            // )} */}
+                          {hasAction(user.permissions, "manageProducts", "delete") && (
+                            <DropdownMenuItem
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDelete(product);
+                              }}
+                              disabled={!!deleteDialogId}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -428,18 +512,21 @@ export default function ProductsPage() {
 
       {/* Pagination controls (shadcn style) */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 w-full">
-        {/* Page size control + description on the left */}
         <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-start">
           <span className="text-xs text-gray-600 mr-2">Rows per page:</span>
-          <select
-            className="border rounded-md py-2 px-3 text-base"
-            value={limit}
-            onChange={e => handleLimitChange(Number(e.target.value))}
+          <Select
+            value={String(limit)}
+            onValueChange={(value) => handleLimitChange(Number(value))}
           >
-            {PAGE_SIZE_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
+            <SelectTrigger className="min-w-[80px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map((opt) => (
+                <SelectItem key={opt} value={String(opt)}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="ml-5 text-xs text-gray-600">
             {pagination.total
               ? `Showing ${(pagination.page - 1) * pagination.limit + 1}–${Math.min(
@@ -449,7 +536,6 @@ export default function ProductsPage() {
               : null}
           </span>
         </div>
-        {/* Pagination on the right */}
         <div className="flex justify-end w-full sm:w-auto">
           <Pagination>
             <PaginationContent>
@@ -475,7 +561,6 @@ export default function ProductsPage() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </PaginationItem>
-              {/* Page number links */}
               {getPaginationRange(pagination.page, pagination.totalPages, 1).map((item, idx) =>
                 item === "..." ? (
                   <PaginationItem key={idx}>

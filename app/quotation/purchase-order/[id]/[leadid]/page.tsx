@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Trash2, Package } from "lucide-react";
 import { hasModule, hasAction } from "@/lib/permissions";
@@ -573,395 +574,393 @@ export default function CreatePurchaseOrder() {
   };
 
   return (
-    <div className="p-6 space-y-4 rounded-md mt-16 bg-white  shadow border border-gray-200 p-4 ">
-      <h1 className="text-xl font-semibold mb-4">Create Purchase Order</h1>
-
-      {/* Customer PO Number input */}
-      <div className="mb-6 ">
-        <label className="font-semibold text-sm block mb-1" htmlFor="customer-po-number">
-          Customer PO Number <span className="text-red-500">*</span>
-        </label>
-        <Input
-          id="customer-po-number"
-          type="text"
-          placeholder="Enter Customer PO number (as shown on customer PO)"
-          value={customerPONumber}
-          onChange={handleCustomerPONumberChange}
-          autoComplete="off"
-          maxLength={100}
-          required
-        />
-        <div className="text-xs text-muted-foreground mt-1">
-          <span>
-            Enter the customer's Purchase Order (PO) number exactly as shown on their PO. This is mandatory and cannot be changed later.
-          </span>
-        </div>
-      </div>
-
-      {quoteLoading ? (
-        <div className="py-6 text-center text-gray-400">Loading quotation&hellip;</div>
-      ) : (
-        <>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold">Product Items</span>
-              <div className="flex gap-2">
-              {hasAction(user.permissions, "manageProducts", "create") && (
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="ghost" 
-                  className="flex items-center gap-2 bg-pink-700 text-white"
-                  onClick={() => router.push("/products/add")}
-                >
-                  <Package className="w-4 h-4" />
-                  Add Master Products
-                </Button>
-              )}
-                {hasAction(user.permissions, "managePurchaseOrder", "create") && (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={addItem}
-                  className="px-3 py-1"
-                  variant="outline"
-                >
-                  + Add Item
-                </Button>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-6">
-              {items.map((item, idx) => {
-                const licenseType = item.licenseType;
-                return (
-                  <div
-                    className="bg-white rounded-lg shadow border border-gray-200 p-4 grid gap-3 relative"
-                    key={idx}
-                  >
-                    <div className="absolute top-3 right-3">
-                      {/* Replace Remove button with Trash2 Lucide icon */}
-                      {hasAction(user.permissions, "managePurchaseOrder", "create") && (
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        disabled={items.length === 1}
-                        title={items.length === 1 ? "At least one item required" : "Remove"}
-                        className={`text-red-600 transition hover:text-red-800 disabled:text-gray-300 p-1 rounded-full border border-transparent hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 ${
-                          items.length === 1 ? "cursor-not-allowed" : ""
-                        }`}
-                        tabIndex={0}
+    <div className="py-8 px-6 space-y-4 max-w-8xl mx-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h1 className="text-xl font-semibold">Create Purchase Order</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Customer PO Number input */}
+          <div className="mb-6 max-w-md">
+            <label className="font-semibold text-sm block mb-1" htmlFor="customer-po-number">
+              Customer PO Number <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="customer-po-number"
+              type="text"
+              placeholder="Enter Customer PO number (as shown on customer PO)"
+              value={customerPONumber}
+              onChange={handleCustomerPONumberChange}
+              autoComplete="off"
+              maxLength={100}
+              required
+            />
+          </div>
+          {quoteLoading ? (
+            <div className="py-6 text-center text-gray-400">Loading quotation&hellip;</div>
+          ) : (
+            <>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold">Product Items</span>
+                  <div className="flex gap-2">
+                  {hasAction(user?.permissions, "manageProducts", "create") && (
+                    <Button 
+                      type="button" 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-2"
+                      onClick={() => router.push("/products/add")}
+                    >
+                      {/* <Package className="w-4 h-4" /> */}
+                      Add Master Products
+                    </Button>
+                  )}
+                  {hasAction(user?.permissions, "managePurchaseOrder", "create") && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={addItem}
+                      className="px-3 py-1"
+                      variant="outline"
+                    >
+                      Add Item
+                    </Button>
+                  )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
+                  {items.map((item, idx) => {
+                    const licenseType = item.licenseType;
+                    return (
+                      <div
+                        className="bg-white rounded-lg shadow border border-gray-200 p-4 grid gap-3 relative"
+                        key={idx}
                       >
-                        <Trash2 size={20} strokeWidth={2} aria-label="Remove" />
-                      </button>
-                      )}
-                    </div>
-                    {/* Product Details Display */}
-                    {(item.productName || item.productCode || item.category || item.oem || item.oemPrice) && (
-                      <div className="mb-3 p-3 bg-muted/50 rounded-md border">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          {item.productName && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">Product Name:</span>
-                              <p className="font-semibold">{item.productName}</p>
-                            </div>
-                          )}
-                          {item.productCode && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">Product Code:</span>
-                              <p className="font-semibold">{item.productCode}</p>
-                            </div>
-                          )}
-                          {item.category && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">Category:</span>
-                              <p className="font-semibold">{item.category}</p>
-                            </div>
-                          )}
-                          {item.oem && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">OEM:</span>
-                              <p className="font-semibold">{item.oem}</p>
-                            </div>
-                          )}
-                          {item.oemPrice && (
-                            <div>
-                              <span className="text-muted-foreground font-medium">OEM Price:</span>
-                              <p className="font-semibold">
-                                ₹{Number(item.oemPrice).toLocaleString("en-IN")}
-                              </p>
-                            </div>
+                        <div className="absolute top-3 right-3">
+                          {/* Replace Remove button with Trash2 Lucide icon */}
+                          {hasAction(user?.permissions, "managePurchaseOrder", "create") && (
+                          <button
+                            type="button"
+                            onClick={() => removeItem(idx)}
+                            disabled={items.length === 1}
+                            title={items.length === 1 ? "At least one item required" : "Remove"}
+                            className={`text-red-600 transition hover:text-red-800 disabled:text-gray-300 p-1 rounded-full border border-transparent hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200 ${
+                              items.length === 1 ? "cursor-not-allowed" : ""
+                            }`}
+                            tabIndex={0}
+                          >
+                            <Trash2 size={20} strokeWidth={2} aria-label="Remove" />
+                          </button>
                           )}
                         </div>
-                      </div>
-                    )}
+                        {/* Product Details Display */}
+                        {(item.productName || item.productCode || item.category || item.oem || item.oemPrice) && (
+                          <div className="mb-3 p-3 bg-muted/50 rounded-md border">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                              {item.productName && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium">Product Name:</span>
+                                  <p className="font-semibold">{item.productName}</p>
+                                </div>
+                              )}
+                              {item.productCode && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium">Product Code:</span>
+                                  <p className="font-semibold">{item.productCode}</p>
+                                </div>
+                              )}
+                              {item.category && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium">Category:</span>
+                                  <p className="font-semibold">{item.category}</p>
+                                </div>
+                              )}
+                              {item.oem && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium">OEM:</span>
+                                  <p className="font-semibold">{item.oem}</p>
+                                </div>
+                              )}
+                              {item.oemPrice && (
+                                <div>
+                                  <span className="text-muted-foreground font-medium">OEM Price:</span>
+                                  <p className="font-semibold">
+                                    ₹{Number(item.oemPrice).toLocaleString("en-IN")}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <Label
-                          className="font-semibold text-sm mb-1 block"
-                          htmlFor={`productId-${idx}`}
-                        >
-                          Product
-                        </Label>
-                        <Select
-                          value={getProductSelectValue(item.productId)}
-                          onValueChange={(value) => handleProductSelect(value, idx)}
-                        >
-                          <SelectTrigger id={`productId-${idx}`} className="w-full">
-                            <SelectValue placeholder={productsLoading ? "Loading..." : "Select a product"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {productsLoading ? (
-                              <SelectItem value="loading" disabled>
-                                Loading products...
-                              </SelectItem>
-                            ) : products.length === 0 ? (
-                              <SelectItem value="no-products" disabled>
-                                No products available
-                              </SelectItem>
-                            ) : (
-                              products.map((product) => {
-                                const productValue = product.productId || product._id || product.id || "";
-                                const isDisabled = items.some((item, itemIdx) => {
-                                  if (itemIdx === idx || !item.productId) return false;
-                                  
-                                  const existingProduct = products.find(
-                                    (p) =>
-                                      p.productId === item.productId ||
-                                      p._id === item.productId ||
-                                      p.id === item.productId ||
-                                      (p._id && p._id.toString() === item.productId) ||
-                                      (p.id && p.id.toString() === item.productId)
-                                  );
-                                  
-                                  if (existingProduct && product) {
-                                    if (existingProduct.productId && product.productId) {
-                                      return existingProduct.productId === product.productId;
-                                    }
-                                    return (
-                                      existingProduct._id === product._id ||
-                                      existingProduct.id === product.id
-                                    );
-                                  }
-                                  return false;
-                                });
-                                
-                                return (
-                                  <SelectItem
-                                    key={product._id || product.id || product.productId}
-                                    value={productValue}
-                                    disabled={isDisabled}
-                                  >
-                                    {product.productName} ({product.productCode || product.productId})
-                                    {isDisabled && " (Already selected)"}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-1">
+                            <Label
+                              className="font-semibold text-sm mb-1 block"
+                              htmlFor={`productId-${idx}`}
+                            >
+                              Product
+                            </Label>
+                            <Select
+                              value={getProductSelectValue(item.productId)}
+                              onValueChange={(value) => handleProductSelect(value, idx)}
+                            >
+                              <SelectTrigger id={`productId-${idx}`} className="w-full">
+                                <SelectValue placeholder={productsLoading ? "Loading..." : "Select a product"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {productsLoading ? (
+                                  <SelectItem value="loading" disabled>
+                                    Loading products...
                                   </SelectItem>
-                                );
-                              })
-                            )}
-                          </SelectContent>
-                        </Select>
+                                ) : products.length === 0 ? (
+                                  <SelectItem value="no-products" disabled>
+                                    No products available
+                                  </SelectItem>
+                                ) : (
+                                  products.map((product) => {
+                                    const productValue = product.productId || product._id || product.id || "";
+                                    const isDisabled = items.some((item, itemIdx) => {
+                                      if (itemIdx === idx || !item.productId) return false;
+                                      
+                                      const existingProduct = products.find(
+                                        (p) =>
+                                          p.productId === item.productId ||
+                                          p._id === item.productId ||
+                                          p.id === item.productId ||
+                                          (p._id && p._id.toString() === item.productId) ||
+                                          (p.id && p.id.toString() === item.productId)
+                                      );
+                                      
+                                      if (existingProduct && product) {
+                                        if (existingProduct.productId && product.productId) {
+                                          return existingProduct.productId === product.productId;
+                                        }
+                                        return (
+                                          existingProduct._id === product._id ||
+                                          existingProduct.id === product.id
+                                        );
+                                      }
+                                      return false;
+                                    });
+                                    
+                                    return (
+                                      <SelectItem
+                                        key={product._id || product.id || product.productId}
+                                        value={productValue}
+                                        disabled={isDisabled}
+                                      >
+                                        {product.productName} ({product.productCode || product.productId})
+                                        {isDisabled && " (Already selected)"}
+                                      </SelectItem>
+                                    );
+                                  })
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label
+                              className="font-semibold text-sm mb-1 block"
+                              htmlFor={`description-${idx}`}
+                            >
+                              Description
+                            </label>
+                            <Input
+                              id={`description-${idx}`}
+                              placeholder="Description"
+                              value={item.description}
+                              onChange={(e) =>
+                                handleItemChange(idx, "description", e.target.value)
+                              }
+                              required
+                              name={`items.${idx}.description`}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-1">
+                            <label
+                              className="font-semibold text-sm mb-1 block"
+                              htmlFor={`unitPrice-${idx}`}
+                            >
+                              Unit Price
+                            </label>
+                            <Input
+                              id={`unitPrice-${idx}`}
+                              placeholder="Unit Price"
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                handleItemChange(idx, "unitPrice", e.target.value)
+                              }
+                              type="number"
+                              name={`items.${idx}.unitPrice`}
+                              min="0"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label
+                              className="font-semibold text-sm mb-1 block"
+                              htmlFor={`quantity-${idx}`}
+                            >
+                              Quantity
+                            </label>
+                            <Input
+                              id={`quantity-${idx}`}
+                              placeholder="Quantity"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleItemChange(idx, "quantity", e.target.value)
+                              }
+                              type="number"
+                              name={`items.${idx}.quantity`}
+                              min="1"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseType-${idx}`}>License Type</label>
+                            <select
+                              id={`licenseType-${idx}`}
+                              name={`items.${idx}.licenseType`}
+                              value={item.licenseType}
+                              onChange={e =>
+                                handleItemChange(idx, "licenseType", e.target.value)
+                              }
+                              className="p-2 border rounded w-full"
+                              required
+                            >
+                              <option value="">Select License Type</option>
+                              {LICENSE_TYPES.map(type => (
+                                <option value={type} key={type}>{type}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseExpiryDate-${idx}`}>License Expiry Date</label>
+                            <Input
+                              id={`licenseExpiryDate-${idx}`}
+                              placeholder="License Expiry Date"
+                              type="date"
+                              value={item.licenseExpiryDate}
+                              onChange={e =>
+                                handleItemChange(idx, "licenseExpiryDate", e.target.value)
+                              }
+                              name={`items.${idx}.licenseExpiryDate`}
+                              disabled={item.licenseType === "perpetual"}
+                              required={item.licenseType !== "perpetual"}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <label
-                          className="font-semibold text-sm mb-1 block"
-                          htmlFor={`description-${idx}`}
-                        >
-                          Description
-                        </label>
-                        <Input
-                          id={`description-${idx}`}
-                          placeholder="Description"
-                          value={item.description}
-                          onChange={(e) =>
-                            handleItemChange(idx, "description", e.target.value)
-                          }
-                          required
-                          name={`items.${idx}.description`}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <label
-                          className="font-semibold text-sm mb-1 block"
-                          htmlFor={`unitPrice-${idx}`}
-                        >
-                          Unit Price
-                        </label>
-                        <Input
-                          id={`unitPrice-${idx}`}
-                          placeholder="Unit Price"
-                          value={item.unitPrice}
-                          onChange={(e) =>
-                            handleItemChange(idx, "unitPrice", e.target.value)
-                          }
-                          type="number"
-                          name={`items.${idx}.unitPrice`}
-                          min="0"
-                          required
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label
-                          className="font-semibold text-sm mb-1 block"
-                          htmlFor={`quantity-${idx}`}
-                        >
-                          Quantity
-                        </label>
-                        <Input
-                          id={`quantity-${idx}`}
-                          placeholder="Quantity"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            handleItemChange(idx, "quantity", e.target.value)
-                          }
-                          type="number"
-                          name={`items.${idx}.quantity`}
-                          min="1"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseType-${idx}`}>License Type</label>
-                        <select
-                          id={`licenseType-${idx}`}
-                          name={`items.${idx}.licenseType`}
-                          value={item.licenseType}
-                          onChange={e =>
-                            handleItemChange(idx, "licenseType", e.target.value)
-                          }
-                          className="p-2 border rounded w-full"
-                          required
-                        >
-                          <option value="">Select License Type</option>
-                          {LICENSE_TYPES.map(type => (
-                            <option value={type} key={type}>{type}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseExpiryDate-${idx}`}>License Expiry Date</label>
-                        <Input
-                          id={`licenseExpiryDate-${idx}`}
-                          placeholder="License Expiry Date"
-                          type="date"
-                          value={item.licenseExpiryDate}
-                          onChange={e =>
-                            handleItemChange(idx, "licenseExpiryDate", e.target.value)
-                          }
-                          name={`items.${idx}.licenseExpiryDate`}
-                          disabled={item.licenseType === "perpetual"}
-                          required={item.licenseType !== "perpetual"}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-              <label className="font-semibold text-sm" htmlFor="paymentTerms">
-                Payment Terms
-              </label>
-              <Input
-                name="paymentTerms"
-                placeholder="Payment Terms"
-                onChange={handleChange}
-                value={form.paymentTerms}
-                id="paymentTerms"
-              />
-            </div>
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-              <label className="font-semibold text-sm" htmlFor="deliveryTerms">
-                Delivery Terms
-              </label>
-              <Input
-                name="deliveryTerms"
-                placeholder="Delivery Terms"
-                onChange={handleChange}
-                value={form.deliveryTerms}
-                id="deliveryTerms"
-              />
-            </div>
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-              <label className="font-semibold text-sm" htmlFor="poDate">
-                PO Date
-              </label>
-              <Input
-                name="poDate"
-                placeholder="PO Date"
-                onChange={handleChange}
-                value={form.poDate}
-                type="date"
-                id="poDate"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2 md:col-span-1">
-              <label className="font-semibold text-sm" htmlFor="notes">
-                Notes
-              </label>
-              <Textarea
-                name="notes"
-                placeholder="Notes"
-                rows={3}
-                onChange={handleChange}
-                value={form.notes}
-                id="notes"
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-                <label className="font-semibold text-sm" htmlFor="poPdf">
-                  PO PDF (Attachment)
-                </label>
-                <Input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
-                  required
-                  id="poPdf"
-                />
-              </div>
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-sm" htmlFor="licenseFile">
-                    License File
-                  </label>
-                  <span className="text-xs text-muted-foreground">(Optional)</span>
+                    );
+                  })}
                 </div>
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx,image/*"
-                  onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
-                  id="licenseFile"
-                />
               </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-center">
-          {hasAction(user.permissions, "managePurchaseOrder", "create") && (
-            <Button
-              onClick={submitPurchaseOrder}
-              disabled={loading}
-              className="w-48 text-lg"
-              size="lg"
-            >
-              {loading ? "Creating..." : "Create"}
-            </Button>
+              <div className="mt-8 grid gap-4 md:grid-cols-3">
+                <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                  <label className="font-semibold text-sm" htmlFor="paymentTerms">
+                    Payment Terms
+                  </label>
+                  <Input
+                    name="paymentTerms"
+                    placeholder="Payment Terms"
+                    onChange={handleChange}
+                    value={form.paymentTerms}
+                    id="paymentTerms"
+                  />
+                </div>
+                <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                  <label className="font-semibold text-sm" htmlFor="deliveryTerms">
+                    Delivery Terms
+                  </label>
+                  <Input
+                    name="deliveryTerms"
+                    placeholder="Delivery Terms"
+                    onChange={handleChange}
+                    value={form.deliveryTerms}
+                    id="deliveryTerms"
+                  />
+                </div>
+                <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                  <label className="font-semibold text-sm" htmlFor="poDate">
+                    PO Date
+                  </label>
+                  <Input
+                    name="poDate"
+                    placeholder="PO Date"
+                    onChange={handleChange}
+                    value={form.poDate}
+                    type="date"
+                    id="poDate"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2 md:col-span-1">
+                  <label className="font-semibold text-sm" htmlFor="notes">
+                    Notes
+                  </label>
+                  <Textarea
+                    name="notes"
+                    placeholder="Notes"
+                    rows={3}
+                    onChange={handleChange}
+                    value={form.notes}
+                    id="notes"
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                    <label className="font-semibold text-sm" htmlFor="poPdf">
+                      PO PDF (Attachment)
+                    </label>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => setPoPdfFile(e.target.files?.[0] || null)}
+                      required
+                      id="poPdf"
+                    />
+                  </div>
+                  <div className="bg-white rounded-lg shadow border border-gray-200 p-6 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-semibold text-sm" htmlFor="licenseFile">
+                        License File
+                      </label>
+                      <span className="text-xs text-muted-foreground">(Optional)</span>
+                    </div>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,image/*"
+                      onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
+                      id="licenseFile"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+              {hasAction(user?.permissions, "managePurchaseOrder", "create") && (
+                <Button
+                  onClick={submitPurchaseOrder}
+                  disabled={loading}
+                  className=" "
+                 
+                >
+                  {loading ? "Creating..." : "Create"}
+                </Button>
+              )}
+              </div>
+            </>
           )}
-          </div>
-        </>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

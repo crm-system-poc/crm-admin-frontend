@@ -16,6 +16,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 // These enums match the backend model strictly:
 const STATUS = [
@@ -251,315 +252,320 @@ export default function LeadDetailsPage() {
     );
 
   return (
-    <div className="py-10 px-6 space-y-8">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => router.back()}>
-          Back
-        </Button>
-        <h1 className="text-2xl font-semibold flex-1">Lead Details</h1>
-        <Badge className="capitalize" variant="secondary">
-          {lead.status}
-        </Badge>
-        <Badge className="capitalize" variant="outline">
-          {lead.priority}
-        </Badge>
-      </div>
-      <Separator />
-      {/* 3x3 grid layout */}
-      <form className="space-y-6" onSubmit={handleUpdate}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Customer Name *
-            </label>
-            <Input
-              required
-              value={form.customerName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, customerName: e.target.value }))
-              }
-              placeholder="Customer Name"
-              maxLength={100}
-            />
+    <div className="py-8 px-6 space-y-4 max-w-8xl mx-auto">
+      <Card>
+        <CardContent className=" space-y-4">
+          <div className="flex items-center gap-2">
+            {/* <Button variant="outline" size="sm" onClick={() => router.back()}>
+              Back
+            </Button> */}
+            <h1 className="text-2xl font-semibold flex-1">Lead Details</h1>
+            {/* <Badge className="capitalize" variant="secondary">
+              {lead.status}
+            </Badge>
+            <Badge className="capitalize" variant="outline">
+              {lead.priority}
+            </Badge> */}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Contact Person *
-            </label>
-            <Input
-              required
-              value={form.contactPerson}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, contactPerson: e.target.value }))
-              }
-              placeholder="Contact Person"
-              maxLength={100}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Email *</label>
-            <Input
-              required
-              type="email"
-              value={form.email}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, email: e.target.value }))
-              }
-              placeholder="Email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Phone Number *
-            </label>
-            <Input
-              required
-              value={form.phoneNumber}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, phoneNumber: e.target.value }))
-              }
-              placeholder="Phone Number"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Alt Email
-            </label>
-            <Input
-              type="email"
-              value={form.altEmail}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, altEmail: e.target.value }))
-              }
-              placeholder="Alternative Email"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Alt Phone Number
-            </label>
-            <Input
-              value={form.altPhoneNumber}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, altPhoneNumber: e.target.value }))
-              }
-              placeholder="Alternative Phone Number"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Address Street
-            </label>
-            <Input
-              value={form.addressStreet}
-              maxLength={200}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, addressStreet: e.target.value }))
-              }
-              placeholder="Street"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Address City
-            </label>
-            <Input
-              value={form.addressCity}
-              maxLength={50}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, addressCity: e.target.value }))
-              }
-              placeholder="City"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Address State
-            </label>
-            <Input
-              value={form.addressState}
-              maxLength={50}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, addressState: e.target.value }))
-              }
-              placeholder="State"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Address Zip Code
-            </label>
-            <Input
-              value={form.addressZipCode}
-              maxLength={20}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, addressZipCode: e.target.value }))
-              }
-              placeholder="Zip Code"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Country
-            </label>
-            <Input
-              value={form.addressCountry}
-              maxLength={50}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, addressCountry: e.target.value }))
-              }
-              placeholder="Country"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Location
-            </label>
-            <Input
-              value={form.location}
-              maxLength={100}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, location: e.target.value }))
-              }
-              placeholder="Location"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Requirement Details
-            </label>
-            <Input
-              value={form.requirementDetails}
-              maxLength={1000}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, requirementDetails: e.target.value }))
-              }
-              placeholder="Requirement Details"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Status</label>
-            <Select
-              value={form.status}
-              onValueChange={(value) =>
-                setForm((f) => ({ ...f, status: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Source</label>
-            <Select
-              value={form.source}
-              onValueChange={(value) =>
-                setForm((f) => ({ ...f, source: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Source" />
-              </SelectTrigger>
-              <SelectContent>
-                {SOURCE.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Notes
-            </label>
-            <Input
-              value={form.notes}
-              maxLength={1000}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              placeholder="Notes"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Priority
-            </label>
-            <Select
-              value={form.priority}
-              onValueChange={(value) =>
-                setForm((f) => ({ ...f, priority: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITY.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Estimated Value
-            </label>
-            <Input
-              type="number"
-              value={form.estimatedValue}
-              min={0}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, estimatedValue: e.target.value }))
-              }
-              placeholder="Value (e.g., 100000)"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Follow-up Date
-            </label>
-            <Input
-              type="date"
-              value={form.followUpDate}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, followUpDate: e.target.value }))
-              }
-              placeholder="Follow Up Date"
-            />
-          </div>
-        </div>
-        <div className="flex gap-2 mt-4">
-          <Button type="submit" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.push("/leads")}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
+          {/* <Separator /> */}
+          {/* 3x3 grid layout */}
+          <form className="space-y-6" onSubmit={handleUpdate}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Customer Name *
+                </label>
+                <Input
+                  required
+                  value={form.customerName}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, customerName: e.target.value }))
+                  }
+                  placeholder="Customer Name"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Contact Person *
+                </label>
+                <Input
+                  required
+                  value={form.contactPerson}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, contactPerson: e.target.value }))
+                  }
+                  placeholder="Contact Person"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email *</label>
+                <Input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Phone Number *
+                </label>
+                <Input
+                  required
+                  value={form.phoneNumber}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, phoneNumber: e.target.value }))
+                  }
+                  placeholder="Phone Number"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Alt Email
+                </label>
+                <Input
+                  type="email"
+                  value={form.altEmail}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, altEmail: e.target.value }))
+                  }
+                  placeholder="Alternative Email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Alt Phone Number
+                </label>
+                <Input
+                  value={form.altPhoneNumber}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, altPhoneNumber: e.target.value }))
+                  }
+                  placeholder="Alternative Phone Number"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Address Street
+                </label>
+                <Input
+                  value={form.addressStreet}
+                  maxLength={200}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, addressStreet: e.target.value }))
+                  }
+                  placeholder="Street"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Address City
+                </label>
+                <Input
+                  value={form.addressCity}
+                  maxLength={50}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, addressCity: e.target.value }))
+                  }
+                  placeholder="City"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Address State
+                </label>
+                <Input
+                  value={form.addressState}
+                  maxLength={50}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, addressState: e.target.value }))
+                  }
+                  placeholder="State"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Address Zip Code
+                </label>
+                <Input
+                  value={form.addressZipCode}
+                  maxLength={20}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, addressZipCode: e.target.value }))
+                  }
+                  placeholder="Zip Code"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Country
+                </label>
+                <Input
+                  value={form.addressCountry}
+                  maxLength={50}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, addressCountry: e.target.value }))
+                  }
+                  placeholder="Country"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Location
+                </label>
+                <Input
+                  value={form.location}
+                  maxLength={100}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, location: e.target.value }))
+                  }
+                  placeholder="Location"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Requirement Details
+                </label>
+                <Input
+                  value={form.requirementDetails}
+                  maxLength={1000}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, requirementDetails: e.target.value }))
+                  }
+                  placeholder="Requirement Details"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Status</label>
+                <Select
+                  value={form.status}
+                  onValueChange={(value) =>
+                    setForm((f) => ({ ...f, status: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Source</label>
+                <Select
+                  value={form.source}
+                  onValueChange={(value) =>
+                    setForm((f) => ({ ...f, source: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Notes
+                </label>
+                <Input
+                  value={form.notes}
+                  maxLength={1000}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, notes: e.target.value }))
+                  }
+                  placeholder="Notes"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Priority
+                </label>
+                <Select
+                  value={form.priority}
+                  onValueChange={(value) =>
+                    setForm((f) => ({ ...f, priority: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Estimated Value
+                </label>
+                <Input
+                  type="number"
+                  value={form.estimatedValue}
+                  min={0}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, estimatedValue: e.target.value }))
+                  }
+                  placeholder="Value (e.g., 100000)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Follow-up Date
+                </label>
+                <Input
+                  type="date"
+                  value={form.followUpDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, followUpDate: e.target.value }))
+                  }
+                  placeholder="Follow Up Date"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+            <Button
+                type="button"
+                variant="secondary"
+                onClick={() => router.push("/leads")}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

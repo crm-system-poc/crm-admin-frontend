@@ -45,13 +45,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 import OEMDialog from "@/components/oem/OEMDialog";
 import { toast } from "sonner";
 import {
   Plus,
   MoreHorizontal,
+  MoreVertical,
   Pencil,
   Trash2,
   Factory,
@@ -74,7 +75,7 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
     <>
       {Array.from({ length: rows }).map((_, i) => (
         <TableRow key={i}>
-          {Array.from({ length: 6 }).map((__, j) => (
+          {Array.from({ length: 7 }).map((__, j) => (
             <TableCell key={j}>
               <Skeleton className="h-4 w-full" />
             </TableCell>
@@ -144,6 +145,16 @@ export default function OEMPage() {
   /* ---------------- Columns ---------------- */
 
   const columns: ColumnDef<any>[] = [
+    {
+      id: "srNo",
+      header: "Sr. No",
+      cell: ({ row }) => {
+        // Show correct serial number relative to current pagination
+        const { pageIndex, pageSize } = table.getState().pagination;
+        return pageIndex * pageSize + row.index + 1;
+      },
+      size: 60,
+    },
     { accessorKey: "name", header: "Name" },
     { accessorKey: "email", header: "Email" },
     { accessorKey: "contactNumber", header: "Contact" },
@@ -162,7 +173,7 @@ export default function OEMPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -172,7 +183,7 @@ export default function OEMPage() {
                 setOpen(true);
               }}
             >
-              <Pencil className="mr-2 h-4 w-4" /> Edit
+              View details
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive"
@@ -181,13 +192,16 @@ export default function OEMPage() {
                 setDeleteOpen(true);
               }}
             >
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
+             Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
   ];
+
+  // To access pagination in sr.no column, we need to initialize table before using columns
+  const [tableInstance, setTableInstance] = useState<any>(null);
 
   const table = useReactTable({
     data: filteredData,
@@ -199,12 +213,25 @@ export default function OEMPage() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  // Set table instance after initialization so column is aware of pagination
+  useEffect(() => {
+    setTableInstance(table);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.getState().pagination.pageIndex, table.getState().pagination.pageSize, filteredData]);
+
+  // Patch columns for correct reference to table instance
+  columns[0].cell = ({ row }: any) => {
+    const t = tableInstance || table;
+    const { pageIndex, pageSize } = t.getState().pagination;
+    return pageIndex * pageSize + row.index + 1;
+  };
+
   return (
     <div className="max-w-8xl mx-auto p-4 space-y-6">
       <Card>
         <CardHeader className="space-y-4">
           <div className="flex items-center gap-2">
-            <Factory className="h-5 w-5 text-muted-foreground" />
+            {/* <Factory className="h-5 w-5 text-muted-foreground" /> */}
             <CardTitle className="text-2xl">OEM Management</CardTitle>
           </div>
 
@@ -218,20 +245,23 @@ export default function OEMPage() {
                 className="md:w-[260px]"
               />
 
-              <Tabs
+              <Select
                 value={statusFilter}
                 onValueChange={(v: any) => setStatusFilter(v)}
               >
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="active">Active</TabsTrigger>
-                  <TabsTrigger value="inactive">Inactive</TabsTrigger>
-                </TabsList>
-              </Tabs>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button onClick={() => setOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+              {/* <Plus className="mr-2 h-4 w-4" /> */}
               Add OEM
             </Button>
           </div>
@@ -261,7 +291,7 @@ export default function OEMPage() {
                   <TableSkeleton />
                 ) : table.getRowModel().rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       No OEMs found
                     </TableCell>
                   </TableRow>
@@ -311,11 +341,14 @@ export default function OEMPage() {
 
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
-            {filteredData.map((oem) => (
+            {filteredData.map((oem, idx) => (
               <Card key={oem.id}>
                 <CardContent className="p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div className="font-semibold">{oem.name}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs text-muted-foreground px-1">{idx + 1}</div>
+                      <div className="font-semibold">{oem.name}</div>
+                    </div>
                     <OEMStatusBadge isActive={oem.isActive} />
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -330,7 +363,7 @@ export default function OEMPage() {
                         setOpen(true);
                       }}
                     >
-                      Edit
+                      Edit details
                     </Button>
                     <Button
                       size="sm"

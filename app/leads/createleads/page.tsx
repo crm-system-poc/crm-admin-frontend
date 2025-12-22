@@ -17,6 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { toast } from "sonner"
+// If you have a Card component, import it. Otherwise, you may need to create it or use from your UI library.
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
 // Enum values for dropdowns taken from backend Lead.js model
 const STATUS_LIST = [
@@ -196,335 +198,342 @@ export default function CreateLead() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6 border rounded-md mt-22">
-      <h1 className="text-2xl font-semibold">Create Lead</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* 3x3 grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField
-              control={form.control}
-              name="customerName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Customer Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ABC Corporation" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="contactPerson"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Person</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="john@abccorp.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+91 9876543210" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="altEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Alternate Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="alternate@company.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="altPhoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Alternate Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Alternate phone" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <div className="max-w-8xl py-8 px-4 mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h1 className="text-2xl font-semibold">Create Lead</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* 3x3 grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="ABC Corporation" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="contactPerson"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Person</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="john@abccorp.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+91 9876543210" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="altEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alternate Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="alternate@company.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="altPhoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alternate Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Alternate phone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Address Fields: street/city/state/zip/country */}
-            <FormField
-              control={form.control}
-              name="addressStreet"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Street Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123 Main Street" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="addressCity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Mumbai" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="addressState"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Maharashtra" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="addressZipCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Zip Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="400001" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="addressCountry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input placeholder="India" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Address Fields: street/city/state/zip/country */}
+                <FormField
+                  control={form.control}
+                  name="addressStreet"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Street Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="123 Main Street" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="addressCity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Mumbai" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="addressState"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Maharashtra" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="addressZipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Zip Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="400001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="addressCountry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="India" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="City/Area" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City/Area" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-         
-            {/* SOURCE */}
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Source</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
-                    >
-                      {SOURCE_LIST.map(({ label, value }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              
+                {/* SOURCE */}
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Source</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="block w-full rounded-md border border-input bg-background px-2 py-2"
+                        >
+                          {SOURCE_LIST.map(({ label, value }) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-               {/* STATUS: select */}
-               <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
-                    >
-                      {STATUS_LIST.map(({ label, value }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* STATUS: select */}
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="block w-full rounded-md border border-input bg-background px-2 py-2"
+                        >
+                          {STATUS_LIST.map(({ label, value }) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {/* PRIORITY */}
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="block w-full rounded-md border border-input bg-background px-2 py-2"
+                        >
+                          {PRIORITY_LIST.map(({ label, value }) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* PRIORITY */}
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      className="block w-full rounded-md border border-input bg-background px-2 py-2"
-                    >
-                      {PRIORITY_LIST.map(({ label, value }) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="estimatedValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Value</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="50000"
+                          {...field}
+                          value={
+                            field.value === undefined ||
+                            field.value === null ||
+                            field.value === ""
+                              ? ""
+                              : String(field.value)
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value
+                            field.onChange(val === "" ? "" : Number(val))
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="followUpDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Follow Up Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          placeholder="Follow up date"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="estimatedValue"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated Value</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="50000"
-                      {...field}
-                      value={
-                        field.value === undefined ||
-                        field.value === null ||
-                        field.value === ""
-                          ? ""
-                          : String(field.value)
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value
-                        field.onChange(val === "" ? "" : Number(val))
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="followUpDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Follow Up Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      placeholder="Follow up date"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              {/* Full width fields */}
+              <FormField
+                control={form.control}
+                name="requirementDetails"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Requirement Details</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={4}
+                        placeholder="Need corporate website with 10 pages"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Full width fields */}
-          <FormField
-            control={form.control}
-            name="requirementDetails"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Requirement Details</FormLabel>
-                <FormControl>
-                  <Textarea
-                    rows={4}
-                    placeholder="Need corporate website with 10 pages"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={2}
+                        placeholder="Additional notes..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes</FormLabel>
-                <FormControl>
-                  <Textarea
-                    rows={2}
-                    placeholder="Additional notes..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Button type="submit" className="w-full md:w-auto">
-            Create Lead
-          </Button>
-        </form>
-      </Form>
+              <Button type="submit" className="w-full md:w-auto">
+                Create Lead
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

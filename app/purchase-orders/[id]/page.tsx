@@ -314,9 +314,9 @@ export default function PurchaseOrderDetail() {
     <div className="p-6 space-y-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex flex-wrap items-center gap-2">
-            <span>Purchase Order</span>
-            <span className="font-semibold">{order.poNumber}</span>
+          <CardTitle className="flex text-2xl flex-wrap items-center gap-2">
+        Purchase Order
+      
           </CardTitle>
           <Button
             variant="outline"
@@ -359,7 +359,6 @@ export default function PurchaseOrderDetail() {
                   id="customerName-input"
                   value={customerDetails.customerName}
                   readOnly
-                  className="font-semibold"
                 />
               </div>
               <div>
@@ -373,7 +372,7 @@ export default function PurchaseOrderDetail() {
                   id="contactPerson-input"
                   value={customerDetails.contactPerson}
                   readOnly
-                  className="font-semibold"
+                  
                 />
               </div>
               <div>
@@ -387,7 +386,7 @@ export default function PurchaseOrderDetail() {
                   id="email-input"
                   value={customerDetails.email}
                   readOnly
-                  className="font-semibold"
+                
                 />
               </div>
               <div>
@@ -401,7 +400,7 @@ export default function PurchaseOrderDetail() {
                   id="phoneNumber-input"
                   value={customerDetails.phoneNumber}
                   readOnly
-                  className="font-semibold"
+                  
                 />
               </div>
               <div>
@@ -415,7 +414,7 @@ export default function PurchaseOrderDetail() {
                   id="country-input"
                   value={customerDetails.country}
                   readOnly
-                  className="font-semibold"
+                
                 />
               </div>
               <div className="flex items-center gap-4 mt-5">

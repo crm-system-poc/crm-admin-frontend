@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
   MoreHorizontal, 
+  MoreVertical,
   Plus, 
   Search, 
   Users,
@@ -47,7 +48,8 @@ import {
   Mail,
   Phone,
   Shield,
-  Loader2
+  Loader2,
+  RefreshCcw
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -137,17 +139,27 @@ export default function GetAllUserPage() {
       {/* Header Section */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">
-            Manage your CRM users, systemroles, and permissions
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
         </div>
-        {hasAction(user?.permissions, "managePlatformUsers", "create") && (
-        <Button onClick={handleCreateUser} size="lg" className="gap-2 shadow-lg">
-          <Plus className="h-5 w-5" />
-          Create User
-        </Button>
-        )}
+        <div className="flex gap-2">
+          {hasAction(user?.permissions, "managePlatformUsers", "create") && (
+            <Button onClick={handleCreateUser} size="lg" className="gap-2 ">
+              Create User
+            </Button>
+          )}
+          {/* Refresh Button */}
+          <Button 
+            onClick={fetchUsers}
+            size="lg"
+            variant="outline"
+            className="gap-2 flex items-center"
+            disabled={loading}
+            title="Refresh Users"
+          >
+            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -195,10 +207,7 @@ export default function GetAllUserPage() {
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle>All Users</CardTitle>
-              <CardDescription>
-                View and manage all users in your system
-              </CardDescription>
+              <CardTitle >All Users</CardTitle>
             </div>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -252,7 +261,7 @@ export default function GetAllUserPage() {
                     <TableHead className="font-semibold">Contact</TableHead>
                     <TableHead className="font-semibold">systemrole</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="w-[80px] text-right font-semibold">Actions</TableHead>
+                    <TableHead className="w-[80px] font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -296,7 +305,7 @@ export default function GetAllUserPage() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -304,26 +313,26 @@ export default function GetAllUserPage() {
                                 size="icon"
                                 className="h-8 w-8 group-hover:opacity-100 transition-opacity"
                               >
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreVertical className="h-4 w-4" />
                                 <span className="sr-only">Open menu</span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
                             {hasAction(permissions , "managePlatformUsers", "update") && (
                               <DropdownMenuItem onClick={() => handleEdit(id)} className="gap-2">
-                                <Pencil className="h-4 w-4" />
-                                Edit
+                                {/* <Pencil className="h-4 w-4" /> */}
+                                View details
                               </DropdownMenuItem>
                             )}
                               
-                              <DropdownMenuSeparator />
+                              {/* <DropdownMenuSeparator /> */}
                               {hasAction(permissions , "managePlatformUsers", "delete") && (
                                 <DropdownMenuItem
                                   className="gap-2 text-destructive focus:text-destructive"
                                   onClick={() => handleDelete(id)}
                                   disabled={deletingId === id}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                {/* <Trash2 className="h-4 w-4" /> */}
                                 {deletingId === id ? "Deleting..." : "Delete"}
                               </DropdownMenuItem>
                               )}

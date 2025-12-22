@@ -622,11 +622,11 @@ export default function CreateQuotationPage() {
   // }
 
   return (
-    <main className="max-w-6xl mx-auto py-8 px-4">
+    <main className="max-w-8xl mx-auto py-8 px-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-6 h-6 text-pink-600" />
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            {/* <FileText className="w-6 h-6 text-pink-600" /> */}
             Create Quotation
           </CardTitle>
         </CardHeader>
@@ -634,7 +634,7 @@ export default function CreateQuotationPage() {
           <div className="space-y-6">
             {/* Customer Details */}
             <section>
-              <h3 className="text-lg font-semibold mb-2">Customer Details</h3>
+              {/* <h3 className="text-lg font-semibold mb-2">Customer Details</h3> */}
               {customerDetailsLoading ? (
                 <div className="text-muted-foreground text-sm mb-4">
                   Loading customer details...
@@ -777,7 +777,7 @@ export default function CreateQuotationPage() {
                   className="flex items-center gap-2"
                   onClick={() => router.push("/products/add")}
                 >
-                  <Package className="w-4 h-4" />
+                  {/* <Package className="w-4 h-4" /> */}
                   Add New Product
                 </Button>
               </div>
@@ -931,7 +931,7 @@ export default function CreateQuotationPage() {
                 size="sm"
                 className="mt-1 flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" />
+                {/* <Plus className="w-4 h-4" /> */}
                 Add Item
               </Button>
             </section>
@@ -942,7 +942,7 @@ export default function CreateQuotationPage() {
                 htmlFor="pdf-file"
                 className="block font-medium mb-1 flex items-center gap-2"
               >
-                <FilePlus className="w-4 h-4 text-muted-foreground" />
+                {/* <FilePlus className="w-4 h-4 text-muted-foreground" /> */}
                 Attach Quotation PDF (optional)
               </label>
               <Input
@@ -960,7 +960,7 @@ export default function CreateQuotationPage() {
                   htmlFor="tax-rate"
                   className="block font-medium mb-1 flex items-center gap-2"
                 >
-                  <Percent className="w-4 h-4 text-muted-foreground" />
+                  {/* <Percent className="w-4 h-4 text-muted-foreground" /> */}
                   Tax Rate (%)
                 </label>
                 <Input
@@ -978,7 +978,7 @@ export default function CreateQuotationPage() {
                   htmlFor="validity-days"
                   className="block font-medium mb-1 flex items-center gap-2"
                 >
-                  <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                  {/* <CalendarDays className="w-4 h-4 text-muted-foreground" /> */}
                   Validity Days
                 </label>
                 <Input
@@ -996,7 +996,7 @@ export default function CreateQuotationPage() {
                   htmlFor="notes"
                   className="block font-medium mb-1 flex items-center gap-2"
                 >
-                  <StickyNote className="w-4 h-4 text-muted-foreground" />
+                  {/* <StickyNote className="w-4 h-4 text-muted-foreground" /> */}
                   Notes
                 </label>
                 <Textarea
@@ -1013,7 +1013,7 @@ export default function CreateQuotationPage() {
                   htmlFor="terms-and-conditions"
                   className="block font-medium mb-1 flex items-center gap-2"
                 >
-                  <StickyNote className="w-4 h-4 text-muted-foreground" />
+                  {/* <StickyNote className="w-4 h-4 text-muted-foreground" /> */}
                   Terms and Conditions
                 </label>
                 <Textarea
@@ -1035,8 +1035,8 @@ export default function CreateQuotationPage() {
               <Button
                 disabled={loading}
                 onClick={submitQuotation}
-                className="bg-pink-600 hover:bg-pink-700 flex items-center gap-2"
-                size="lg"
+                className="flex items-center gap-2"
+               
               >
                 {loading ? (
                   <>
@@ -1045,7 +1045,7 @@ export default function CreateQuotationPage() {
                   </>
                 ) : (
                   <>
-                    <FilePlus className="w-4 h-4" />
+                    {/* <FilePlus className="w-4 h-4" /> */}
                     Submit Quotation
                   </>
                 )}
@@ -1057,7 +1057,7 @@ export default function CreateQuotationPage() {
                 disabled={loading}
                 className="flex items-center gap-2"
               >
-                <X className="w-4 h-4" />
+                {/* <X className="w-4 h-4" /> */}
                 Cancel
               </Button>
             </div>

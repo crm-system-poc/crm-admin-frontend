@@ -67,6 +67,38 @@ const STATUS_OPTIONS = [
   { value: "expired", label: "Expired" },
 ];
 
+// Sample page content for Purchase Order, assume you want to add this "page".
+// You may replace with actual content/components.
+function PurchaseOrderPageSection({ quotation }: { quotation: Quotation }) {
+  // Placeholder for page content. Replace with real Order content as needed.
+  return (
+    <div className="mt-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Purchase Order</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Example fields for demonstration */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="font-medium">Order for Quotation #</label>
+              <Input readOnly value={quotation.quoteId || quotation.id || ""} />
+            </div>
+            <div>
+              <label className="font-medium">Order Status</label>
+              <Input readOnly value={quotation.status || ""} />
+            </div>
+          </div>
+          {/* Add more purchase order specific fields here */}
+          <div className="mt-4 text-muted-foreground">
+            This section can be used to display or manage the purchase order generated from this quotation.
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function QuotationDetail() {
   const { id } = useParams();
   const [quotation, setQuotation] = useState<Quotation | null>(null);
@@ -131,6 +163,7 @@ export default function QuotationDetail() {
 
   return (
     <div className="p-6  mx-auto space-y-8">
+      {/* Quotation CARD */}
       <Card>
         <CardHeader>
           <CardTitle>
@@ -430,6 +463,10 @@ export default function QuotationDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add the Purchase Order page content inside a Card here */}
+      {quotation && <PurchaseOrderPageSection quotation={quotation} />}
+
       {showDeleteConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="bg-white rounded shadow p-6 space-y-4">

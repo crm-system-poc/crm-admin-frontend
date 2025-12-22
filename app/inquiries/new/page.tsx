@@ -71,36 +71,25 @@ export default function CreateInquiryPage() {
 
   return (
     <ProtectedPage module="manageInquiry" action="create">
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 p-4">
         {/* Header with back button */}
         <div className="flex items-center gap-4">
-          <Link href="/inquiries">
+          {/* <Link href="/inquiries">
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-          </Link>
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">
-              Create Inquiry
-            </h2>
-            <p className="text-muted-foreground">
-              Add a new customer inquiry to the system
-            </p>
-          </div>
+          </Link> */}
+        
         </div>
 
         {/* Form Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <UserPlus className="h-5 w-5 text-primary" />
-              </div>
               <div>
-                <CardTitle>Inquiry Details</CardTitle>
-                <CardDescription>
-                  Fill in the information below to create a new inquiry
-                </CardDescription>
+              <h2 className="text-2xl font-bold tracking-tight">
+              Create Inquiry
+            </h2>
               </div>
             </div>
           </CardHeader>
@@ -218,14 +207,14 @@ export default function CreateInquiryPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex gap-3 pt-4">
                 <Link href="/inquiries">
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </Link>
                 <Button type="submit" disabled={isSubmitting} className="gap-2">
-                  <Save className="h-4 w-4" />
+                  {/* <Save className="h-4 w-4" /> */}
                   {isSubmitting ? "Creating..." : "Create Inquiry"}
                 </Button>
               </div>

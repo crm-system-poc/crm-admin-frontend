@@ -51,6 +51,7 @@ import {
   ExternalLink,
   Loader2,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { hasAction } from "@/lib/permissions";
@@ -68,7 +69,7 @@ const statusColorMap: Record<string, string> = {
 };
 
 const getAgeInDays = (createdAt?: string) => {
-  if (!createdAt) return "-";
+  if (!createdAt) return "-"; 
   const created = new Date(createdAt);
   const now = new Date();
   const diffTime = now.setHours(0, 0, 0, 0) - created.setHours(0, 0, 0, 0);
@@ -171,72 +172,30 @@ export default function QuotationList() {
     }
   };
 
+  // ---- ADD: For refresh button loading effect ----
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+  // -----------------------------------------------
+
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-8xl mx-auto flex flex-col">
-        <Card>
-          <CardHeader className="border-b ">
+        {/* <Card>
+          <CardHeader className="border-b "> */}
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-0">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-2xl font-semibold">
                   Quotations
                 </h1>
-                <p className="text-slate-500">
-                  Manage and track all your quotations
-                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-sm font-normal">
-                  <FileText className="w-3 h-3 mr-1" />
-                  {totalRecords} Total
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent >
-            {/* Filters */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Filter className="w-5 h-5 text-slate-500" />
-                <span className="text-lg font-semibold">Filters</span>
-              </div>
-              <span className="block text-slate-500 mb-3 text-sm">
-                Search and filter quotations by status and customer
-              </span>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <label
-                    htmlFor="status-filter"
-                    className="block mb-2 text-sm font-medium text-slate-700"
-                  >
-                    Status
-                  </label>
-                  <Select
-                    value={status ?? "all"}
-                    onValueChange={(v) => setStatus(v === "all" ? undefined : v)}
-                  >
-                    <SelectTrigger id="status-filter" className="w-full">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      {STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label
-                    htmlFor="customer-filter"
-                    className="block mb-2 text-sm font-medium text-slate-700"
-                  >
-                    Customer Name
-                  </label>
-                  <div className="relative">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full md:w-auto items-stretch">
+                 <div className="w-full  flex items-stretch gap-2">
+                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
                       id="customer-filter"
@@ -247,9 +206,49 @@ export default function QuotationList() {
                       onChange={(e) => setCustomerName(e.target.value)}
                     />
                   </div>
+                  <Button
+                    type="button"
+                    // className="h-10 w-10 flex-shrink-0"
+                    variant="outline"
+                    onClick={handleRefresh}
+                    aria-label="Refresh"
+                    disabled={loading || refreshing}
+                  >
+                    {refreshing || loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Refresh
+                  </Button>
                 </div>
+                <div className="w-full sm:w-56">
+                  <Select
+                    value={status ?? "all"}
+                    onValueChange={(v) => setStatus(v === "all" ? undefined : v)}
+                  >
+                    <SelectTrigger id="status-filter" className="w-full">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Begin: Search + Refresh grouping */}
+               
+                {/* End: Search + Refresh grouping */}
               </div>
             </div>
+          {/* </CardHeader> */}
+          {/* <CardContent > */}
+            {/* Filters */}
+            
             {/* Table */}
             <div className="overflow-x-auto">
               {loading ? (
@@ -275,19 +274,19 @@ export default function QuotationList() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-lg overflow-hidden border border-slate-200">
+                <div className="rounded-md border shadow-md">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50 hover:bg-slate-50">
-                        <TableHead className="font-semibold text-slate-700">Sr.No</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Quotation ID</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Customer</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Lead</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Value</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Documentation</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                        <TableHead className="font-semibold text-slate-700">Age</TableHead>
-                        <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>
+                      <TableRow  className="bg-muted/40">
+                        <TableHead className="font-semibold ">Sr.No</TableHead>
+                        <TableHead className="font-semibold ">Quotation ID</TableHead>
+                        <TableHead className="font-semibold ">Customer</TableHead>
+                        <TableHead className="font-semibold ">Phone Number</TableHead>
+                        <TableHead className="font-semibold ">Value</TableHead>
+                        <TableHead className="font-semibold ">Documentation</TableHead>
+                        <TableHead className="font-semibold ">Status</TableHead>
+                        <TableHead className="font-semibold ">Age</TableHead>
+                        <TableHead className="font-semibold">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -297,28 +296,28 @@ export default function QuotationList() {
                         return (
                           <TableRow
                             key={quotation.id}
-                            className="hover:bg-slate-50/50 transition-colors"
+                            // className="hover:bg-slate-50/50 transition-colors"
                           >
-                            <TableCell className="text-sm text-slate-600">{srNo}</TableCell>
-                            <TableCell className="font-semibold text-slate-900">{quotation.quoteId}</TableCell>
-                            <TableCell className="text-sm text-slate-900">
+                            <TableCell >{srNo}</TableCell>
+                            <TableCell >{quotation.quoteId}</TableCell>
+                            <TableCell >
                               {quotation.customerDetails?.contactPerson || "-"}
                             </TableCell>
                             <TableCell>
-                              {quotation.leadId?.id ? (
-                                <Button
+                              {/* {quotation.leadId?.id ? ( */}
+                                {/* <Button
                                   size="sm"
                                   variant="link"
                                   className="px-0 h-auto text-blue-600 hover:text-blue-700 font-medium"
                                   onClick={() => handleViewDetails(quotation)}
-                                >
-                                  {quotation.leadId.customerName}
-                                </Button>
+                                > */}
+                                  {quotation.customerDetails?.phoneNumber}
+                                {/* </Button>
                               ) : (
                                 <span className="text-sm text-slate-400">-</span>
-                              )}
+                              )} */}
                             </TableCell>
-                            <TableCell className="font-medium text-slate-900">
+                            <TableCell>
                               {quotation.currency === "INR"
                                 ? "₹"
                                 : quotation.currency}{" "}
@@ -339,7 +338,7 @@ export default function QuotationList() {
                                   <ExternalLink className="w-3 h-3" />
                                 </a>
                               ) : (
-                                <span className="text-sm text-slate-400">—</span>
+                                <span >—</span>
                               )}
                             </TableCell>
                             <TableCell>
@@ -352,8 +351,8 @@ export default function QuotationList() {
                                 {quotation.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-slate-600">{age}</TableCell>
-                            <TableCell className="text-right">
+                            <TableCell >{age}</TableCell>
+                            <TableCell >
                               <DropdownMenu
                                 open={openDropdownId === quotation.id}
                                 onOpenChange={(open) =>
@@ -376,7 +375,7 @@ export default function QuotationList() {
                                   >
                                     View Details
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
+                                  {/* <DropdownMenuSeparator /> */}
                                   <DropdownMenuItem
                                     onClick={() => {
                                       setQuotationToAssign(quotation);
@@ -392,7 +391,7 @@ export default function QuotationList() {
                                   >
                                     Create PO
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
+                                  {/* <DropdownMenuSeparator /> */}
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <DropdownMenuItem
@@ -445,7 +444,7 @@ export default function QuotationList() {
               )}
             </div>
             {/* Pagination */}
-            <div className="flex justify-end items-center gap-2 px-4 py-3 border-t mt-2">
+            <div className="flex justify-end items-center gap-2 px-4 py-3 mt-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -466,8 +465,8 @@ export default function QuotationList() {
                 Next
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          {/* </CardContent> */}
+        {/* </Card> */}
         {/* Assign Quotation Dialog */}
         <AssignQuotationDialog
           open={assignDialogOpen}

@@ -95,12 +95,11 @@ export default function AddProductPage() {
   };
 
   return (
-    <main className="max-w-6xl mx-auto py-10 px-4">
-      <Card className="shadow-lg">
+    <main className="max-w-8xl mx-auto py-10 px-4">
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold">Add Product</CardTitle>
         </CardHeader>
-        <Separator />
         <CardContent>
           <form
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
@@ -224,7 +223,7 @@ export default function AddProductPage() {
             </div>
 
             {/* Submit Button (spans all) */}
-            <div className="flex flex-col col-span-1 md:col-span-3 items-end mt-2">
+            <div className="flex flex-col col-span-1 md:col-span-3  mt-2">
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -236,7 +235,7 @@ export default function AddProductPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-pink-600 hover:bg-pink-700 text-white"
+                 
                   disabled={loading}
                 >
                   {loading ? "Saving..." : "Add Product"}

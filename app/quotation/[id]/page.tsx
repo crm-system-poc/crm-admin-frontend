@@ -135,82 +135,95 @@ export default function QuotationDetail() {
     <div className="p-6  mx-auto space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>
-            Quotation{" "}
-            {quotation.quoteId
-              ? `#${quotation.quoteId}`
-              : quotation.id
-              ? `#${quotation.id}`
-              : ""}
+          <CardTitle className="text-2xl">
+            Quotation Details
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Customer info fields */}
-            <div className="space-y-2 grid grid-cols-3 md:grid-cols-2">
-              <label className="font-medium">Customer Name :-</label>
-              <Input readOnly value={cust.customerName || ""} />
-
-              <label className="font-medium">Contact Person :-</label>
-              <Input readOnly value={cust.contactPerson || ""} />
-
-              <label className="font-medium">Email :-</label>
-              <Input readOnly value={cust.email || ""} />
-
-              <label className="font-medium">Phone Number :-</label>
-              <Input readOnly value={cust.phoneNumber || ""} />
-
-              <label className="font-medium">Country :-</label>
-              <Input readOnly value={addr.country || ""} />
+          {/* 3x3 Grid for main details: Customer Info + Quotation Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Column 1 - Customer Info */}
+            <div className="space-y-5">
+              <div>
+                <label className="block font-medium text-sm mb-1">Customer Name</label>
+                <Input readOnly value={cust.customerName || ""} />
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Contact Person</label>
+                <Input readOnly value={cust.contactPerson || ""} />
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Email</label>
+                <Input readOnly value={cust.email || ""} />
+                <div className="mt-4">
+                <label className="block font-medium text-sm mb-1">Status</label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="min-w-[340px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem value={opt.value} key={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              </div>
             </div>
-
-            {/* Quotation summary fields */}
-            <div className="space-y-2 grid grid-cols-3 md:grid-cols-2">
-              <label className="font-medium">Quote Number :-</label>
-              <Input readOnly value={quotation.quoteId || quotation.id || ""} />
-
-              <label className="font-medium">Quote Date :-</label>
-              <Input
-                readOnly
-                value={
-                  quotation.dateOfQuote
-                    ? new Date(quotation.dateOfQuote).toLocaleDateString()
-                    : ""
-                }
-              />
-
-              <label className="font-medium">Valid Until :-</label>
-              <Input
-                readOnly
-                value={
-                  quotation.validUntil
-                    ? new Date(quotation.validUntil).toLocaleDateString()
-                    : ""
-                }
-              />
-
-              <label className="font-medium">Currency :-</label>
-              <Input readOnly value={quotation.currency || ""} />
-
-              <label className="font-medium">Status :-</label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="min-w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem value={opt.value} key={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Column 2 - More Customer/Quote Info */}
+            <div className="space-y-5">
+              <div>
+                <label className="block font-medium text-sm mb-1">Phone Number</label>
+                <Input readOnly value={cust.phoneNumber || ""} />
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Country</label>
+                <Input readOnly value={addr.country || ""} />
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Quote Number</label>
+                <Input readOnly value={quotation.quoteId || quotation.id || ""} />
+              </div>
+            </div>
+            {/* Column 3 - Quotation Summary */}
+            <div className="space-y-6">
+              <div>
+                <label className="block font-medium text-sm mb-1">Quote Date</label>
+                <Input
+                  readOnly
+                  value={
+                    quotation.dateOfQuote
+                      ? new Date(quotation.dateOfQuote).toLocaleDateString()
+                      : ""
+                  }
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Valid Until</label>
+                <Input
+                  readOnly
+                  value={
+                    quotation.validUntil
+                      ? new Date(quotation.validUntil).toLocaleDateString()
+                      : ""
+                  }
+                />
+                
+              </div>
+              <div>
+                <label className="block font-medium text-sm mb-1">Currency</label>
+                <Input readOnly value={quotation.currency || ""} />
+              </div>
+             
+             
             </div>
             {hasAction(user.permissions, "manageQuotation", "update") && (
-            <Button className="mt-2 max-w-30" onClick={updateStatus}>
-              Update Status
-            </Button>
-            )}
+                <Button className="mt-2 max-w-30" onClick={updateStatus}>
+                  Update Status
+                </Button>
+              )}
           </div>
 
           {/* Quote items table */}
@@ -267,35 +280,35 @@ export default function QuotationDetail() {
             </div>
           </div>
 
-          {/* Total & financial summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+          {/* Total & financial summary in 3x3 grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div>
-              <label className="font-medium">Total Quote Value</label>
+              <label className="block font-medium text-sm mb-1">Total Quote Value</label>
               <Input
                 readOnly
                 value={quotation.totalQuoteValue?.toLocaleString?.() || ""}
               />
             </div>
             <div>
-              <label className="font-medium">Tax Rate (%)</label>
+              <label className="block font-medium text-sm mb-1">Tax Rate (%)</label>
               <Input readOnly value={quotation.taxRate || ""} />
             </div>
             <div>
-              <label className="font-medium">Tax Amount</label>
+              <label className="block font-medium text-sm mb-1">Tax Amount</label>
               <Input
                 readOnly
                 value={quotation.taxAmount?.toLocaleString?.() || ""}
               />
             </div>
             <div>
-              <label className="font-medium">Grand Total</label>
+              <label className="block font-medium text-sm mb-1">Grand Total</label>
               <Input
                 readOnly
                 value={quotation.grandTotal?.toLocaleString?.() || ""}
               />
             </div>
             <div>
-              <label className="font-medium">Validity Days</label>
+              <label className="block font-medium text-sm mb-1">Validity Days</label>
               <Input
                 readOnly
                 value={quotation.validityDays?.toString() || ""}
@@ -303,10 +316,10 @@ export default function QuotationDetail() {
             </div>
           </div>
 
-          {/* Notes & Terms section */}
-          <div className="grid grid-cols-1 gap-4 mt-8">
+          {/* Notes & Terms section 3x3 grid style (keep 2 col if only Notes/Terms) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
             <div>
-              <label className="font-medium">Notes</label>
+              <label className="block font-medium text-sm mb-1">Notes</label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -317,7 +330,7 @@ export default function QuotationDetail() {
               />
             </div>
             <div>
-              <label className="font-medium">Terms & Conditions</label>
+              <label className="block font-medium text-sm mb-1">Terms & Conditions</label>
               <Textarea
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
@@ -343,44 +356,7 @@ export default function QuotationDetail() {
                 >
                   Preview PDF
                 </Button>
-
-                {/* Download */}
-                {/* <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      const res = await api.get(
-                        `/api/quotations/${id}/download-pdf`,
-                        {
-                          responseType: "blob",
-                        }
-                      );
-                      const url = window.URL.createObjectURL(
-                        new Blob([res.data])
-                      );
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.setAttribute(
-                        "download",
-                        pdf.originalName || "quotation.pdf"
-                      );
-                      document.body.appendChild(link);
-                      link.click();
-                    } catch {
-                      toast.error("Failed to download PDF.");
-                    }
-                  }}
-                >
-                  Download PDF
-                </Button> */}
-
-                {/* Delete triggers confirmation modal */}
-                {/* <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  Delete PDF
-                </Button> */}
+                {/* Download & Delete PDF buttons can go here if enabled */}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -390,6 +366,7 @@ export default function QuotationDetail() {
 
             {/* Upload or Replace */}
             <div>
+              <label className="block font-medium text-sm mb-1">Upload/Replace PDF</label>
               <Input
                 type="file"
                 accept="application/pdf"
