@@ -230,41 +230,42 @@ export default function OEMPage() {
     <div className="max-w-8xl mx-auto p-4 space-y-6">
       <Card>
         <CardHeader className="space-y-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {/* Left: Card header/title */}
+          <div className="flex items-center">
             {/* <Factory className="h-5 w-5 text-muted-foreground" /> */}
             <CardTitle className="text-2xl">OEM Management</CardTitle>
           </div>
+          
+          {/* Right: Search, filter selector, and Add button */}
+          <div className="flex gap-2 w-full md:w-auto justify-end">
+            <Input
+              placeholder="Search OEM..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="md:w-[260px]"
+            />
 
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-            <div className="flex gap-2 w-full md:w-auto">
-              <Input
-                placeholder="Search OEM..."
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                className="md:w-[260px]"
-              />
-
-              <Select
-                value={statusFilter}
-                onValueChange={(v: any) => setStatusFilter(v)}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(v: any) => setStatusFilter(v)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Button onClick={() => setOpen(true)}>
               {/* <Plus className="mr-2 h-4 w-4" /> */}
               Add OEM
             </Button>
           </div>
+        </div>
         </CardHeader>
 
         <CardContent>

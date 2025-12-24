@@ -37,6 +37,7 @@ export function AppBar() {
     { label: "Leads", href: "/leads", icon: Users, perm: "manageLeads" },
     { label: "Quotations", href: "/quotation", icon: IndianRupee, perm: "manageQuotation" },
     { label: "Purchase Orders", href: "/purchase-orders", icon: ListOrdered, perm: "managePurchaseOrder" },
+    { label: "Sales PO", href: "/sales-purchase-orders", icon: ListOrdered, perm: "managePurchaseOrder" },
     { label: "Products", href: "/products", icon: Box, perm: "manageProducts" },
     { label: "OEM", href: "/oems", icon: Box, perm: "manageProducts" },
     { label: "Users", href: "/user", icon: UserCog, perm: "managePlatformUsers" },
@@ -98,7 +99,7 @@ export function AppBar() {
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center gap-1 ml-10">
+        <nav className="hidden md:flex items-center gap-1">
           {navItems
             .filter(item => permissions[item.perm]) 
             .map(({ href, label, icon: Icon }) => (

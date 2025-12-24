@@ -53,6 +53,7 @@ type PurchaseOrder = {
   id: string;
   poNumber: string;
   status: string;
+  poType?:'base'|'sales'|'service';
   customerDetails: {
     customerName: string;
   };
@@ -154,7 +155,7 @@ export default function PurchaseOrderList() {
         <h1 className="text-2xl font-semibold">Purchase Orders</h1>
 
         {/* SEARCH + STATUS + REFRESH */}
-        
+
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full md:w-auto items-stretch">
           <div className="flex flex-1 items-stretch gap-2 w-full">
             <div className="relative flex-1">
@@ -190,7 +191,21 @@ export default function PurchaseOrderList() {
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="2" strokeDasharray="22" strokeDashoffset="10"></circle></svg>
+                  <svg
+                    className="animate-spin h-4 w-4 mr-1"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                  >
+                    <circle
+                      cx="8"
+                      cy="8"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray="22"
+                      strokeDashoffset="10"
+                    ></circle>
+                  </svg>
                   Refreshing...
                 </span>
               ) : (
@@ -214,7 +229,7 @@ export default function PurchaseOrderList() {
               <TableHead>Phone</TableHead>
               <TableHead>Quotation</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead >Action</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -229,7 +244,7 @@ export default function PurchaseOrderList() {
                 <TableCell>
                   <Badge className="capitalize">{po?.status}</Badge>
                 </TableCell>
-                <TableCell >
+                <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
@@ -242,6 +257,18 @@ export default function PurchaseOrderList() {
                       >
                         View details
                       </DropdownMenuItem>
+
+                      {po.poType === "base" && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(
+                              `/sales-purchase-orders/create?basePoId=${po.id}`
+                            )
+                          }
+                        >
+                          Create Sales PO
+                        </DropdownMenuItem>
+                      )}
 
                       {canAssign && (
                         <DropdownMenuItem
