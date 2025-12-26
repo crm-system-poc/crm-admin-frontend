@@ -317,6 +317,61 @@ export default function CreateQuotationPage() {
     });
   };
 
+  // --- MODIFIED getProductsForItemSelect ---
+  // For NEW product (only empty productId), exclude *all* previously selected products
+  // For editing an existing row, allow only the products not selected in other rows, or the selected one in this row
+  const getProductsForItemSelect = (currentIdx: number) => {
+    // Find if item is a new row (blank/empty productId)
+    const isNewItem = !items[currentIdx]?.productId;
+    if (isNewItem) {
+      // For a new item, show only products that are not selected in any other (even if already exists in another)
+      const selectedProductIds = items
+        .map((item) => item.productId)
+        .filter((id) => id);
+
+      return products.filter((product) => {
+        const productValues = [
+          product.productId,
+          product._id,
+          product.id,
+          product._id?.toString?.(),
+          product.id?.toString?.(),
+        ].filter(Boolean);
+        // Exclude product if it's selected in any row!
+        return !selectedProductIds.some((pid) =>
+          productValues.includes(pid as string)
+        );
+      });
+    } else {
+      // Existing item in edit: allow any product not selected in other rows, or its own
+      const selectedProductIds = items
+        .map((item, idx) =>
+          idx !== currentIdx && item.productId ? item.productId : null
+        )
+        .filter(Boolean);
+
+      return products.filter((product) => {
+        const productValues = [
+          product.productId,
+          product._id,
+          product.id,
+          product._id?.toString?.(),
+          product.id?.toString?.(),
+        ].filter(Boolean);
+
+        // If the current item has this value, always show it.
+        const isProductInThisRow =
+          productValues.includes(items?.[currentIdx]?.productId);
+
+        const isSelectedElsewhere = selectedProductIds.some((pid) =>
+          productValues.includes(pid as string)
+        );
+
+        return isProductInThisRow || !isSelectedElsewhere;
+      });
+    }
+  };
+
   const handleProductSelect = (value: string, itemIdx: number) => {
     if (!value) {
       handleItemChange(itemIdx, "productId", "");
@@ -811,51 +866,30 @@ export default function CreateQuotationPage() {
                             No products available
                           </SelectItem>
                         ) : (
-                          products.map((product) => {
-                            const productValue =
-                              product.productId ||
-                              product._id ||
-                              product.id ||
-                              "";
-                            const isDisabled = items.some((item, itemIdx) => {
-                              if (itemIdx === idx || !item.productId)
-                                return false;
-
-                              const existingProduct = products.find(
-                                (p) =>
-                                  p.productId === item.productId ||
-                                  p._id === item.productId ||
-                                  p.id === item.productId ||
-                                  (p._id &&
-                                    p._id.toString() === item.productId) ||
-                                  (p.id && p.id.toString() === item.productId)
+                          getProductsForItemSelect(idx).length === 0 ? (
+                            <SelectItem value="no-avail" disabled>
+                              No available products
+                            </SelectItem>
+                          ) : (
+                            getProductsForItemSelect(idx).map((product) => {
+                              const productValue =
+                                product.productId ||
+                                product._id ||
+                                product.id ||
+                                "";
+                              return (
+                                <SelectItem
+                                  key={
+                                    product._id || product.id || product.productId
+                                  }
+                                  value={productValue}
+                                >
+                                  {product.productName} (
+                                  {product.productCode || product.productId})
+                                </SelectItem>
                               );
-
-                              if (existingProduct && product) {
-                                return (
-                                  existingProduct.productId ===
-                                    product.productId ||
-                                  existingProduct._id === product._id ||
-                                  existingProduct.id === product.id
-                                );
-                              }
-                              return false;
-                            });
-
-                            return (
-                              <SelectItem
-                                key={
-                                  product._id || product.id || product.productId
-                                }
-                                value={productValue}
-                                disabled={isDisabled}
-                              >
-                                {product.productName} (
-                                {product.productCode || product.productId})
-                                {isDisabled && " (Already selected)"}
-                              </SelectItem>
-                            );
-                          })
+                            })
+                          )
                         )}
                       </SelectContent>
                     </Select>
@@ -930,6 +964,12 @@ export default function CreateQuotationPage() {
                 onClick={addItem}
                 size="sm"
                 className="mt-1 flex items-center gap-2"
+                disabled={
+                  // Disable add item if there are no more available products to add
+                  products.length === 0 ||
+                  items.length >= products.length ||
+                  getProductsForItemSelect(items.length)?.length === 0
+                }
               >
                 {/* <Plus className="w-4 h-4" /> */}
                 Add Item

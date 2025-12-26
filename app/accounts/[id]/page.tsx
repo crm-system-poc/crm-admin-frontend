@@ -16,12 +16,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -31,7 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import LedgerTab from "@/components/accounts/LedgerTab";
 
 export default function EditAccountPage() {
   const { id } = useParams();
@@ -42,29 +38,45 @@ export default function EditAccountPage() {
   const [relatedData, setRelatedData] = useState<any>(null);
   const [loadingRelated, setLoadingRelated] = useState(false);
 
-  useEffect(() => {
-    // Load account details
-    api.get(`/api/accounts/${id}`)
-      .then((res) => {
-        setAccount(res.data.data);
-        setForm({
-          customerName: res.data.data.customerName ?? "",
-          contactPerson: res.data.data.contactPerson ?? "",
-          email: res.data.data.email ?? "",
-          phoneNumber: res.data.data.phoneNumber ?? "",
-          alternateNumber: res.data.data.alternateNumber ?? "",
-          street: res.data.data.address?.street ?? "",
-          city: res.data.data.address?.city ?? "",
-          state: res.data.data.address?.state ?? "",
-          zipCode: res.data.data.address?.zipCode ?? "",
-          country: res.data.data.address?.country ?? "",
-        });
-      })
-      .catch(() => toast.error("Failed to load account"));
+  // State for payments
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
 
-    // Load related data
-    loadRelatedData();
+  // NEW: One "refresh" loading to show spinning Refresh button globally
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    // Load all data on mount
+    fetchAll();
+    // eslint-disable-next-line
   }, [id]);
+
+  const fetchAll = async () => {
+    setRefreshing(true);
+    await Promise.all([loadAccountDetails(), loadRelatedData(), loadPayments()]);
+    setRefreshing(false);
+  };
+
+  const loadAccountDetails = async () => {
+    try {
+      const res = await api.get(`/api/accounts/${id}`);
+      setAccount(res.data.data);
+      setForm({
+        customerName: res.data.data.customerName ?? "",
+        contactPerson: res.data.data.contactPerson ?? "",
+        email: res.data.data.email ?? "",
+        phoneNumber: res.data.data.phoneNumber ?? "",
+        alternateNumber: res.data.data.alternateNumber ?? "",
+        street: res.data.data.address?.street ?? "",
+        city: res.data.data.address?.city ?? "",
+        state: res.data.data.address?.state ?? "",
+        zipCode: res.data.data.address?.zipCode ?? "",
+        country: res.data.data.address?.country ?? "",
+      });
+    } catch {
+      toast.error("Failed to load account");
+    }
+  };
 
   const loadRelatedData = async () => {
     try {
@@ -77,6 +89,30 @@ export default function EditAccountPage() {
     } finally {
       setLoadingRelated(false);
     }
+  };
+
+  // Fetches payments from the /api/payments/account/{accountId} API
+  const loadPayments = async () => {
+    try {
+      setLoadingPayments(true);
+      const res = await api.get(`/api/payments/account/${id}`);
+      if (res.data && Array.isArray(res.data.data)) {
+        setPayments(res.data.data);
+      } else {
+        setPayments([]);
+      }
+    } catch (error) {
+      setPayments([]);
+      toast.error("Failed to load payment data");
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
+
+  // For AddPaymentDialog success, reload payments
+  const handlePaymentSuccess = () => {
+    loadPayments();
+    loadRelatedData(); // In case you want side-reload
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +178,18 @@ export default function EditAccountPage() {
     return statusColors[status] || "bg-gray-100 text-gray-700";
   };
 
+  // If still loading main data, do not render form
   if (!account || !form) return null;
+
+  // Helper: get 'AddPaymentDialog', fallback empty for build
+  let AddPaymentDialog: any = () => null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    AddPaymentDialog = require("@/components/accounts/AddPaymentDialog").default;
+  } catch (_e) {
+    // fallback noop
+    AddPaymentDialog = () => null;
+  }
 
   return (
     <div className="max-w-8xl mx-auto p-6 space-y-4">
@@ -156,15 +203,33 @@ export default function EditAccountPage() {
         Back to Accounts
       </Button> */}
 
+      {/* Refresh Button Add: */}
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchAll}
+          disabled={refreshing}
+          aria-label="Refresh"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+
       {/* Unified Big Tabs - Customer Details, Leads, Quotation, Purchase Orders */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Account details</CardTitle>
+          <CardTitle className="text-2xl font-semibold">
+            Account details
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="customer-details" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="customer-details">Customer Details</TabsTrigger>
+              <TabsTrigger value="customer-details">
+                Customer Details
+              </TabsTrigger>
               <TabsTrigger value="leads">
                 Leads ({relatedData?.leads?.pagination?.total || 0})
               </TabsTrigger>
@@ -172,13 +237,15 @@ export default function EditAccountPage() {
                 Quotations ({relatedData?.quotations?.pagination?.total || 0})
               </TabsTrigger>
               <TabsTrigger value="purchase-orders">
-                Purchase Orders ({relatedData?.purchaseOrders?.pagination?.total || 0})
+                Purchase Orders (
+                {relatedData?.purchaseOrders?.pagination?.total || 0})
               </TabsTrigger>
+              <TabsTrigger value="ledger">Ledger</TabsTrigger>
+              <TabsTrigger value="payment">Payments</TabsTrigger>
             </TabsList>
 
             {/* Customer Details Tab */}
-            <TabsContent value="customer-details" >
-             
+            <TabsContent value="customer-details">
               {/* Edit Form */}
               <form
                 className="space-y-6 mt-8"
@@ -189,7 +256,10 @@ export default function EditAccountPage() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="customerName" className="block mb-2 font-medium">
+                    <Label
+                      htmlFor="customerName"
+                      className="block mb-2 font-medium"
+                    >
                       Customer Name
                     </Label>
                     <Input
@@ -204,7 +274,10 @@ export default function EditAccountPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contactPerson" className="block mb-2 font-medium">
+                    <Label
+                      htmlFor="contactPerson"
+                      className="block mb-2 font-medium"
+                    >
                       Contact Person
                     </Label>
                     <Input
@@ -233,7 +306,10 @@ export default function EditAccountPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phoneNumber" className="block mb-2 font-medium">
+                    <Label
+                      htmlFor="phoneNumber"
+                      className="block mb-2 font-medium"
+                    >
                       Phone Number
                     </Label>
                     <Input
@@ -248,7 +324,10 @@ export default function EditAccountPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="alternateNumber" className="block mb-2 font-medium">
+                    <Label
+                      htmlFor="alternateNumber"
+                      className="block mb-2 font-medium"
+                    >
                       Alternate Number
                     </Label>
                     <Input
@@ -385,13 +464,17 @@ export default function EditAccountPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{lead.priority || "medium"}</Badge>
+                            <Badge variant="outline">
+                              {lead.priority || "medium"}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/leads/${lead._id || lead.id}`)}
+                              onClick={() =>
+                                router.push(`/leads/${lead._id || lead.id}`)
+                              }
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -430,10 +513,15 @@ export default function EditAccountPage() {
                         <TableRow key={quotation._id || quotation.id}>
                           <TableCell>{quotation.quoteId || "N/A"}</TableCell>
                           <TableCell>
-                            {quotation.customerDetails?.customerName || quotation.leadId?.customerName || "N/A"}
+                            {quotation.customerDetails?.customerName ||
+                              quotation.leadId?.customerName ||
+                              "N/A"}
                           </TableCell>
                           <TableCell>
-                            ₹{quotation.grandTotal?.toLocaleString() || quotation.totalQuoteValue?.toLocaleString() || "0"}
+                            ₹
+                            {quotation.grandTotal?.toLocaleString() ||
+                              quotation.totalQuoteValue?.toLocaleString() ||
+                              "0"}
                           </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(quotation.status)}>
@@ -442,14 +530,20 @@ export default function EditAccountPage() {
                           </TableCell>
                           <TableCell>
                             {quotation.dateOfQuote
-                              ? new Date(quotation.dateOfQuote).toLocaleDateString()
+                              ? new Date(
+                                  quotation.dateOfQuote
+                                ).toLocaleDateString()
                               : "N/A"}
                           </TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/quotation/${quotation._id || quotation.id}`)}
+                              onClick={() =>
+                                router.push(
+                                  `/quotation/${quotation._id || quotation.id}`
+                                )
+                              }
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -488,7 +582,9 @@ export default function EditAccountPage() {
                         <TableRow key={po._id || po.id}>
                           <TableCell>{po.poNumber}</TableCell>
                           <TableCell>
-                            {po.customerDetails?.customerName || po.leadId?.customerName || "N/A"}
+                            {po.customerDetails?.customerName ||
+                              po.leadId?.customerName ||
+                              "N/A"}
                           </TableCell>
                           <TableCell>
                             ₹{po.totalAmount?.toLocaleString() || "0"}
@@ -507,7 +603,11 @@ export default function EditAccountPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/purchase-orders/${po._id || po.id}`)}
+                              onClick={() =>
+                                router.push(
+                                  `/purchase-orders/${po._id || po.id}`
+                                )
+                              }
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -520,6 +620,202 @@ export default function EditAccountPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No purchase orders found for this account
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="ledger" className="mt-4">
+              <LedgerTab accountId={id as string} />
+            </TabsContent>
+
+            {/* Payments Tab --- REWRITTEN: uses payments API */}
+            <TabsContent value="payment" className="mt-4">
+              {/* Refresh button for this tab, small and in the top-right */}
+              <div className="flex justify-end mb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchAll}
+                  disabled={refreshing}
+                  aria-label="Refresh"
+                  className="gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+              {loadingPayments ? (
+                <div className="text-center py-8">Loading...</div>
+              ) : payments && payments.length > 0 ? (
+                <>
+                  {/* Summary Small Cards for Total, Paid, Due */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div className=" p-4 rounded-lg border text-center">
+                      <div className="text-xs text-muted-foreground">Total</div>
+                      <div className="font-semibold text-xl">
+                        ₹
+                        {payments
+                          .reduce(
+                            (acc: number, p: any) => acc + (Number(p.totalAmount) || 0),
+                            0
+                          )
+                          .toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg border text-center">
+                      <div className="text-xs text-muted-foreground">Paid</div>
+                      <div className="font-semibold text-xl text-green-700">
+                        ₹
+                        {payments
+                          .reduce(
+                            (acc: number, p: any) => acc + (Number(p.totalPaid) || 0),
+                            0
+                          )
+                          .toLocaleString()}
+                      </div>
+                    </div>
+                    <div className=" p-4 rounded-lg border text-center">
+                      <div className="text-xs text-muted-foreground">Due</div>
+                      <div className="font-semibold text-xl text-red-700">
+                        ₹
+                        {payments
+                          .reduce(
+                            (acc: number, p: any) => acc + (Number(p.totalDue) || 0),
+                            0
+                          )
+                          .toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payments Table
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>PO #</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Paid</TableHead>
+                          <TableHead>Due</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payments.map((payment: any) => (
+                          <TableRow key={payment._id}>
+                            <TableCell>
+                              {payment.purchaseOrderId?.poNumber || "-"}
+                            </TableCell>
+                            <TableCell>
+                              {payment.purchaseOrderId?.poDate
+                                ? new Date(payment.purchaseOrderId.poDate).toLocaleDateString()
+                                : "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              ₹
+                              {payment.totalAmount !== undefined
+                                ? Number(payment.totalAmount).toLocaleString()
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              ₹
+                              {payment.totalPaid !== undefined
+                                ? Number(payment.totalPaid).toLocaleString()
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              ₹
+                              {payment.totalDue !== undefined
+                                ? Number(payment.totalDue).toLocaleString()
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  payment.status === "paid"
+                                    ? "bg-green-100 text-green-700"
+                                    : payment.status === "partial"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-red-100 text-red-700"
+                                }
+                              >
+                                {payment.status?.toUpperCase?.() || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {payment.status !== "paid" && AddPaymentDialog && (
+                                <AddPaymentDialog
+                                  ledgerId={payment.ledgerId}
+                                  purchaseOrderId={
+                                    payment.purchaseOrderId?._id ||
+                                    payment.purchaseOrderId?.id
+                                  }
+                                  onSuccess={handlePaymentSuccess}
+                                />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div> */}
+
+                  {/* Payment Transactions Breakdown Table (below, with PO context in above table) */}
+                  <div className="mt-8">
+                    <div className="font-semibold mb-2">Payment Transactions</div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>PO Number</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Note</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payments.every((p: any) => !p.accountPayments?.length) ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                              No payment transactions
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          payments.flatMap((payment: any) => 
+                            (payment.accountPayments || []).length === 0
+                              ? []
+                              : payment.accountPayments.map((p: any, i: number) => (
+                                  <TableRow key={payment._id + '-' + i}>
+                                    <TableCell>
+                                      {payment.purchaseOrderId?.poNumber || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      ₹{p.amountCollected}
+                                    </TableCell>
+                                    <TableCell>
+                                      {p.paymentMode || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      {p.paidAt
+                                        ? new Date(p.paidAt).toLocaleDateString()
+                                        : "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      {p.note || "-"}
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No payment records found
                 </div>
               )}
             </TabsContent>
