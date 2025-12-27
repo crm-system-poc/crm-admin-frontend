@@ -48,7 +48,7 @@ export default function EditProductPage() {
   useEffect(() => {
     const fetchOEMs = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/oems/dropdown", {
+        const res = await fetch("https://crm-backend-b8ys.onrender.com/api/oems/dropdown", {
           credentials: "include",
         });
         const data = await res.json();
@@ -67,7 +67,7 @@ export default function EditProductPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`http://localhost:8080/api/products/${id}`, {
+    fetch(`https://crm-backend-b8ys.onrender.com/api/products/${id}`, {
       method: "GET",
       credentials: "include",
     })
@@ -124,7 +124,7 @@ export default function EditProductPage() {
     };
 
     try {
-      const res = await fetch(`http://localhost:8080/api/products/${id}`, {
+      const res = await fetch(`https://crm-backend-b8ys.onrender.com/api/products/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -163,7 +163,7 @@ export default function CreateLead() {
       }
 
       await axios.post(
-        "http://localhost:8080/api/leads",
+        "https://crm-backend-b8ys.onrender.com/api/leads",
         {
           customerName,
           contactPerson,

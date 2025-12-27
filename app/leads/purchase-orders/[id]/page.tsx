@@ -52,7 +52,7 @@ export default function ViewPurchaseOrders() {
       if (supplierName) paramsObj.supplierName = supplierName;
 
       const res = await axios.get(
-        `http://localhost:8080/api/purchase-orders/lead/${leadId}`,
+        `https://crm-backend-b8ys.onrender.com/api/purchase-orders/lead/${leadId}`,
         { params: paramsObj, withCredentials: true }
       );
 

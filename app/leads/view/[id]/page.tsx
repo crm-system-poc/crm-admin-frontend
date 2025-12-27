@@ -54,7 +54,7 @@ export default function ViewQuotation() {
       if (customerName) paramsObj.customerName = customerName;
 
       const res = await axios.get(
-        `http://localhost:8080/api/quotations/lead/${leadId}`,
+        `https://crm-backend-b8ys.onrender.com/api/quotations/lead/${leadId}`,
         { params: paramsObj, withCredentials: true }
       );
 

@@ -77,7 +77,7 @@ export default function ExpiringLicenseListingPage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("http://localhost:8080/api/reports/expiring-licenses", {
+        const res = await fetch("https://crm-backend-b8ys.onrender.com/api/reports/expiring-licenses", {
           credentials: "include",
         });
         const json = await res.json();
