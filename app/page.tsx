@@ -91,6 +91,8 @@ export default function Home() {
 
   /* ------------------------- FETCH DASHBOARD DATA ------------------------ */
   useEffect(() => {
+    const isFulfilled = <T,>(r: PromiseSettledResult<T>): r is PromiseFulfilledResult<T> => r.status === "fulfilled";
+
     const loadDashboard = async () => {
       try {
         const [leadsResp, quotationsResp, purchaseOrdersResp, licenseDataResp] =
@@ -101,10 +103,10 @@ export default function Home() {
             api.get("/api/reports/expiring-licenses"),
           ]);
 
-        const leads = leadsResp.value.data.data;
-        const quotations = quotationsResp.value.data.data;
-        const purchaseOrders = purchaseOrdersResp.value.data.data;
-        const licenseData = licenseDataResp.value.data.data;
+        const leads = isFulfilled(leadsResp) ? leadsResp.value.data.data : null;
+        const quotations = isFulfilled(quotationsResp) ? quotationsResp.value.data.data : null;
+        const purchaseOrders = isFulfilled(purchaseOrdersResp) ? purchaseOrdersResp.value.data.data : null;
+        const licenseData = isFulfilled(licenseDataResp) ? licenseDataResp.value.data.data : null;
 
         setStats({
           leads: leads,
