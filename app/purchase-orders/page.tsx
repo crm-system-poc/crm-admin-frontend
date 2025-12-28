@@ -56,6 +56,7 @@ type PurchaseOrder = {
   poType?:'base'|'sales'|'service';
   customerDetails: {
     customerName: string;
+    phoneNumber?: string;
   };
   leadId?: {
     customerName: string;
