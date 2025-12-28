@@ -48,7 +48,7 @@ export default function CreateAccountPage() {
     });
   };
 
-  const handleCreate = async (data: any) => {
+  const handleCreate = async () => {
     try {
       setLoading(true);
       const payload = {
@@ -68,8 +68,12 @@ export default function CreateAccountPage() {
       await api.post("/api/accounts", payload);
       toast.success("Account created successfully");
       router.push("/accounts");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Failed to create account");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to create account");
+      } else {
+        toast.error("Failed to create account");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,7 +90,7 @@ export default function CreateAccountPage() {
             className="space-y-6"
             onSubmit={(e) => {
               e.preventDefault();
-              handleCreate(form);
+              handleCreate();
             }}
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

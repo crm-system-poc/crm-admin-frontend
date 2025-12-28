@@ -1,10 +1,15 @@
-export const hasModule = (permissions: any, module: string) =>
+type ActionKey = "create" | "read" | "update" | "delete";
+export type Actions = Partial<Record<ActionKey, boolean>>;
+
+export type PermissionMap = { role?: string } & Record<string, boolean | Actions | undefined>;
+
+export const hasModule = (permissions: PermissionMap | null | undefined, module: string) =>
     permissions?.[module] === true;
   
 export const hasAction = (
-  permissions: any,
+  permissions: PermissionMap | null | undefined,
   module: string,
-  action: "create" | "read" | "update" | "delete"
+  action: ActionKey
 ) => {
   if (!permissions) return false;
   if (permissions.role === "SuperAdmin") return true;
@@ -23,13 +28,13 @@ export const hasAction = (
     }
     return (
       permissions[module] &&
-      permissions[actionsKey]?.[action] === true
+      (permissions[actionsKey] as Actions)?.[action] === true
     );
   }
 
   const base = module.replace("manage", "");
   const actionKey = `${base.charAt(0).toLowerCase()}${base.slice(1)}Actions`;
 
-  return permissions[module] && permissions[actionKey]?.[action];
+  return permissions[module] && (permissions[actionKey] as Actions)?.[action];
 };
 

@@ -10,11 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
 import { api } from "@/lib/api";
 
-export function AccountDialog({ open, onClose, editData, onSuccess }: any) {
-  const [form, setForm] = useState<any>({
+type Account = {
+  _id?: string;
+  customerName: string;
+  contactPerson: string;
+  email: string;
+  phoneNumber: string;
+  alternateNumber: string;
+  location: string;
+};
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  editData?: Partial<Account>;
+  onSuccess: () => void;
+}
+
+export function AccountDialog({ open, onClose, editData, onSuccess }: Props) {
+  const [form, setForm] = useState<Account>({
     customerName: "",
     contactPerson: "",
     email: "",
@@ -24,27 +40,38 @@ export function AccountDialog({ open, onClose, editData, onSuccess }: any) {
   });
 
   useEffect(() => {
-    if (editData) setForm(editData);
+    if (editData) setForm(prev => ({ ...prev, ...editData }));
   }, [editData]);
 
+  const getErrorMessage = (err: unknown) => {
+    if (!err) return "Failed";
+    if (typeof err === "string") return err;
+    if (typeof err === "object" && err !== null) {
+      const e = err as Record<string, unknown>;
+      const response = e["response"] as Record<string, unknown> | undefined;
+      const data = response?.["data"] as Record<string, unknown> | undefined;
+      const nestedErr = data?.["error"] as string | undefined;
+      if (typeof nestedErr === "string") return nestedErr;
+      const msg = e["message"] as string | undefined;
+      if (typeof msg === "string") return msg;
+    }
+    return "Failed";
+  };
+
   const submit = async () => {
-    const url = editData
-      ? `/api/accounts/${editData._id}`
-      : "/api/accounts";
+    const url = editData && editData._id ? `/api/accounts/${editData._id}` : "/api/accounts";
 
     try {
-      let res;
-      if (editData) {
-        res = await api.put(url, form, { withCredentials: true });
+      if (editData && editData._id) {
+        await api.put(url, form, { withCredentials: true });
       } else {
-        res = await api.post(url, form, { withCredentials: true });
+        await api.post(url, form, { withCredentials: true });
       }
       toast.success("Account saved");
       onSuccess();
       onClose();
-    } catch (error: any) {
-      const errorMsg =
-        error?.response?.data?.error || error?.message || "Failed";
+    } catch (error: unknown) {
+      const errorMsg = getErrorMessage(error);
       toast.error(errorMsg);
     }
   };
@@ -60,17 +87,17 @@ export function AccountDialog({ open, onClose, editData, onSuccess }: any) {
 
         <div className="grid grid-cols-2 gap-4">
           <Input placeholder="Customer Name" value={form.customerName}
-            onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, customerName: e.target.value })} />
           <Input placeholder="Contact Person" value={form.contactPerson}
-            onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, contactPerson: e.target.value })} />
           <Input placeholder="Email" value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} />
           <Input placeholder="Phone" value={form.phoneNumber}
-            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, phoneNumber: e.target.value })} />
           <Input placeholder="Alternate Number" value={form.alternateNumber}
-            onChange={(e) => setForm({ ...form, alternateNumber: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, alternateNumber: e.target.value })} />
           <Input placeholder="Location" value={form.location}
-            onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, location: e.target.value })} />
         </div>
 
         <div className="flex justify-end gap-2">

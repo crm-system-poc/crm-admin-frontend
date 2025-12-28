@@ -7,9 +7,7 @@ import { api } from "@/lib/api";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
+  CardHeader
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +20,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Edit, Loader2, Calendar, User } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 export default function EditInquiryPage() {
-  const [data, setData] = useState<any>(null);
+  type Inquiry = {
+    customerName?: string;
+    phoneNumber?: string;
+    email?: string;
+    city?: string;
+    message?: string;
+    status?: string;
+    createdBy?: { name?: string };
+    createdAt?: string;
+    isConvertedToLead?: boolean;
+  };
+  const [data, setData] = useState<Inquiry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();

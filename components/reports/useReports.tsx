@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
 interface DashboardData {
@@ -81,73 +80,36 @@ export const useReports = () => {
 
   // Remove stray whitespace/newlines in the API route for both fetchSalesFunnelData and fetchLicenseExpiryData
 
-  const fetchDashboardData = async () => {
-    try {
-      const response = await api.get("/api/reports/dashboard", {
-        withCredentials: true,
-      });
-      setDashboardData(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error.response?.data?.message);
-    }
-  };
-
-  const fetchSalesFunnelData = async () => {
-    try {
-      const currentYear = new Date().getFullYear();
-      const url = `/api/reports/sales-funnel?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31&groupBy=month`;
-      const response = await api.get(
-        url,
-        { withCredentials: true }
-      );
-      setSalesFunnelData(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch sales funnel data:", error);
-    }
-  };
-
-  const fetchLicenseExpiryData = async () => {
-    try {
-      const currentYear = new Date().getFullYear();
-      const url = `/api/reports/license-expiry?year=${currentYear}`;
-      const response = await api.get(
-        url,
-        { withCredentials: true }
-      );
-      setLicenseExpiryData(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch license expiry data:", error);
-    }
-  };
-
-  // getAllExpireLicense
-  const getAllExpireLicense = async () => {
-    try {
-      const url = `/api/reports/expiring-licenses`;
-      const response = await api.get(
-        url,
-        { withCredentials: true }
-      );
-      console.log(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch license expiry data:", error);
-    }
-  };
-
-  const refreshReports = async () => {
+  const refreshReports = useCallback(async () => {
     setIsLoading(true);
-    await Promise.all([
-      fetchDashboardData(),
-      fetchSalesFunnelData(),
-      fetchLicenseExpiryData(),
-      getAllExpireLicense()
-    ]);
-    setIsLoading(false);
-  };
+    try {
+      const currentYear = new Date().getFullYear();
+
+      const [dashboardRes, funnelRes, licenseRes, expiringRes] = await Promise.all([
+        api.get("/api/reports/dashboard", { withCredentials: true }),
+        api.get(
+          `/api/reports/sales-funnel?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31&groupBy=month`,
+          { withCredentials: true }
+        ),
+        api.get(`/api/reports/license-expiry?year=${currentYear}`, { withCredentials: true }),
+        api.get(`/api/reports/expiring-licenses`, { withCredentials: true }),
+      ]);
+
+      setDashboardData(dashboardRes.data.data);
+      setSalesFunnelData(funnelRes.data.data);
+      setLicenseExpiryData(licenseRes.data.data);
+      // Keep previous behaviour of logging the raw data for expiring licenses
+      console.log(expiringRes.data.data);
+    } catch (error: any) {
+      console.error("Failed to refresh reports:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     refreshReports();
-  }, []);
+  }, [refreshReports]);
 
   return {
     dashboardData,

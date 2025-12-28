@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,24 +12,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Plus,
-  Pencil,
-  Trash2,
   Search,
   Users,
   MoreVertical,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { AccountDialog } from "./AccountDialog";
 import { api } from "@/lib/api";
 import {
   AlertDialog,
@@ -52,7 +39,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 export default function AccountsPage() {
@@ -61,8 +47,6 @@ export default function AccountsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
   const router = useRouter();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -78,7 +62,7 @@ export default function AccountsPage() {
       setAccounts(res.data.data);
       setTotalPages(res.data.pagination.totalPages);
       setTotal(res.data.pagination.total || 0);
-    } catch (error) {
+    } catch {
       setAccounts([]);
       setTotalPages(1);
       setTotal(0);
@@ -94,7 +78,7 @@ export default function AccountsPage() {
       await api.delete(`/api/accounts/${deleteId}`);
       setDeleteId(null);
       fetchAccounts();
-    } catch (error) {
+    } catch {
       // Optional: error notification
     } finally {
       setDeleting(false);

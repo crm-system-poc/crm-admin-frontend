@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import { ExternalLink, RefreshCw } from "lucide-react";
 import LedgerTab from "@/components/accounts/LedgerTab";
 
 export default function EditAccountPage() {
@@ -129,7 +130,7 @@ export default function EditAccountPage() {
     });
   };
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async () => {
     try {
       setLoading(true);
       const payload = {
@@ -251,7 +252,7 @@ export default function EditAccountPage() {
                 className="space-y-6 mt-8"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleUpdate(form);
+                  handleUpdate();
                 }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
