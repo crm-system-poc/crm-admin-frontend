@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "https://crm-backend-b8ys.onrender.com/api",
   withCredentials: true,
 });
 

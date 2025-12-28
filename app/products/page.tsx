@@ -114,7 +114,7 @@ export default function ProductsPage() {
         if (category && category !== "__all__") params.set("category", category);
         if (oem && oem !== "__all__") params.set("oem", oem);
 
-        const res = await fetch(`http://localhost:8080/api/products?${params.toString()}`, {
+        const res = await fetch(`https://crm-backend-b8ys.onrender.com/api/products?${params.toString()}`, {
           method: "GET",
           credentials: "include",
         });
@@ -153,7 +153,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/products?limit=1000", {
+        const res = await fetch("https://crm-backend-b8ys.onrender.com/api/products?limit=1000", {
           method: "GET",
           credentials: "include",
         });
@@ -253,7 +253,7 @@ export default function ProductsPage() {
     if (!deleteDialogId) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/products/${deleteDialogId}`, {
+      const res = await fetch(`https://crm-backend-b8ys.onrender.com/api/products/${deleteDialogId}`, {
         method: "DELETE",
         credentials: "include",
       });

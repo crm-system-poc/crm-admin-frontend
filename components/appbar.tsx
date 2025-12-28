@@ -47,7 +47,7 @@ export function AppBar() {
   const handleLogout = async () => {
     try {
       toast.loading("Logging out...");
-      await axios.post("http://localhost:8080/api/admin/logout", {}, { withCredentials: true });
+      await axios.post("https://crm-backend-b8ys.onrender.com/api/admin/logout", {}, { withCredentials: true });
       toast.dismiss();
       toast.success("Logged out successfully.");
       router.push("/login");

@@ -126,7 +126,7 @@ export default function CreatePurchaseOrder() {
       if (!quotationIdParam) return;
       setQuoteLoading(true);
       try {
-        const response = await api.get(`http://localhost:8080/api/quotations/${quotationIdParam}`);
+        const response = await api.get(`https://crm-backend-b8ys.onrender.com/api/quotations/${quotationIdParam}`);
         const data = response.data.data;
         setQuotationData(data);
 
@@ -528,7 +528,7 @@ export default function CreatePurchaseOrder() {
       }
 
       const res = await api.post(
-        "http://localhost:8080/api/purchase-orders",
+        "https://crm-backend-b8ys.onrender.com/api/purchase-orders",
         formData,
         {
           withCredentials: true,
