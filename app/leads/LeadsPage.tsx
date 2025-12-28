@@ -270,8 +270,8 @@ export default function LeadsPage() {
         accessorKey: "createdby",
         header: "Created By",
         cell: ({ row }) => (
-          <p className="capitalize" variant="secondary">
-            {row.original.createdBy.name}
+          <p className="capitalize text-muted-foreground">
+            {row.original.createdBy?.name ?? "System"}
           </p>
         ),
       },
