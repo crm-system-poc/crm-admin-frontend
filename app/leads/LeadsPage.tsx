@@ -600,7 +600,7 @@ export default function LeadsPage() {
       {leadToAssign && (
         <AssignLeadDialog
           open={assignDialogOpen}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             // if (!open) setLeadToAssign(null);
             setAssignDialogOpen(open);
           }}
