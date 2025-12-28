@@ -181,29 +181,28 @@ export default function LeadsPage() {
 
   // const onBulkAssign = async () => { ... }
 
-  const convertTosearchuotation = async (lead: Lead) => {
+  const convertToQuotation = async (lead: Lead) => {
     try {
-      toast.loading("Converting to searchuotation...");
+      toast.loading("Converting to quotation...");
       // Example: pass lead fields directly; adjust to your backend contract
       const payload = {
         customerName: lead.customerName,
         contactPerson: lead.contactPerson,
         email: lead.email,
         phoneNumber: lead.phoneNumber,
-        projectTitle:
-          lead.researchuirementDetails?.slice(0, 40) || "searchuotation",
-        researchuirementDetails: lead.researchuirementDetails,
+        projectTitle: lead.requirementDetails?.slice(0, 40) || "Quotation",
+        requirementDetails: lead.requirementDetails,
         estimatedValue: lead.estimatedValue ?? 0,
         leadId: lead.id,
       };
-      await api.post(`/api/searchuotations`, payload);
+      await api.post(`/api/quotations`, payload);
       toast.dismiss();
-      toast.success("searchuotation created");
-      // navigate to searchuotation list or detail
-      router.push("/searchuotation");
+      toast.success("Quotation created");
+      // navigate to quotation list or detail
+      router.push("/quotation");
     } catch (e) {
       toast.dismiss();
-      toast.error("Failed to convert");
+      toast.error("Failed to convert lead to quotation");
     }
   };
 
