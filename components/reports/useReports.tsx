@@ -100,8 +100,9 @@ export const useReports = () => {
       setLicenseExpiryData(licenseRes.data.data);
       // Keep previous behaviour of logging the raw data for expiring licenses
       console.log(expiringRes.data.data);
-    } catch (error: any) {
-      console.error("Failed to refresh reports:", error);
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
+      console.error("Failed to refresh reports:", e.response?.data?.message ?? error);
     } finally {
       setIsLoading(false);
     }

@@ -20,7 +20,6 @@ import {
   Pie,
   Cell
 } from "recharts";
-import axios from "axios";
 import { api } from "@/lib/api";
 
 interface LicenseExpiryData {
@@ -56,25 +55,23 @@ export default function LicenseExpiryReport({ isLoading }: LicenseExpiryReportPr
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [licenseExpiryData, setLicenseExpiryData] = useState<LicenseExpiryData | null>(null);
 
-  useEffect(() => {
-    fetchLicenseExpiryData();
-  }, [selectedYear]);
-
-  // ---- FIX THE ROUTE ERROR ----
-  // Remove stray whitespace/newlines in the API route.  
-  // Use string concatenation or template literal without a line break at start to avoid leading spaces.
-  const fetchLicenseExpiryData = async () => {
+  const fetchLicenseExpiryData = useCallback(async () => {
     try {
       const response = await api.get(
-        `/api/reports/license-expiry?year=${selectedYear}`, // Route is now correctly formatted (no leading/trailing spaces)
+        `/api/reports/license-expiry?year=${selectedYear}`,
         { withCredentials: true }
       );
       console.log(response.data)
       setLicenseExpiryData(response.data.data);
-    } catch (error:unknown) {
-      console.error("Failed to fetch license expiry data:", error.response?.data?.message);
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
+      console.error("Failed to fetch license expiry data:", e.response?.data?.message ?? error);
     }
-  };
+  }, [selectedYear]);
+
+  useEffect(() => {
+    fetchLicenseExpiryData();
+  }, [fetchLicenseExpiryData]);
 
   const chartData = licenseExpiryData?.monthlyBreakdown.map(month => ({
     name: month.monthName,
@@ -98,7 +95,7 @@ export default function LicenseExpiryReport({ isLoading }: LicenseExpiryReportPr
       acc.push({ ...item });
     }
     return acc;
-  }, [] as any[]);
+  }, [] as Array<{ name: string; value: number }>);
 
   const currentMonth = new Date().getMonth() + 1;
   const upcomingExpiries = licenseExpiryData?.monthlyBreakdown

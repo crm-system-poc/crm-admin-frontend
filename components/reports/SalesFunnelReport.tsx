@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -63,7 +62,7 @@ interface SalesFunnelData {
 }
 
 interface SalesFunnelReportProps {
-  data?: any;
+  data?: SalesFunnelData | null;
   isLoading: boolean;
   view: "detailed" | "full";
 }
@@ -108,11 +107,12 @@ export default function SalesFunnelReport({
       const url = `/api/reports/sales-funnel?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31&groupBy=${timeRange}`;
       const response = await api.get(url, { withCredentials: true });
       setSalesFunnelData(response?.data?.data ?? null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSalesFunnelData(null);
       let apiMessage = "Failed to fetch sales funnel data.";
-      if (err?.response?.data?.message) {
-        apiMessage += " " + err.response.data.message;
+      const e = err as { response?: { data?: { message?: string } } };
+      if (e?.response?.data?.message) {
+        apiMessage += " " + e.response.data.message;
       }
       setError(apiMessage);
       console.error(apiMessage, err);
