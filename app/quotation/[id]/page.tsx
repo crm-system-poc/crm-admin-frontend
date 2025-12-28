@@ -100,7 +100,7 @@ export default function QuotationDetail() {
         setError("Unable to load this quotation.");
       }
     } catch (err: any) {
-      setError("Failed to fetch quotation details."|| err.response?.data?.message);
+      setError(err?.response?.data?.message || "Failed to fetch quotation details.");
       setQuotation(null);
       setStatus("");
     }
@@ -112,8 +112,8 @@ export default function QuotationDetail() {
       await api.put(`/api/quotations/${id}/status`, { status });
       toast.success("Status Updated ✅");
       fetchDetails();
-    } catch (e) {
-      toast.error("Could not update status."|| e.response?.data?.message);
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Could not update status.");
     }
   };
 
