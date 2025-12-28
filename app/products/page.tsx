@@ -221,7 +221,7 @@ export default function ProductsPage() {
     // Shows 1 ... prev curr next ... last
     const range = [];
     const rangeWithDots: (number | "...")[] = [];
-    let l: number;
+    let l: number | undefined;
 
     for (let i = 1; i <= total; i++) {
       if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
@@ -229,7 +229,7 @@ export default function ProductsPage() {
       }
     }
     for (let i of range) {
-      if (l) {
+      if (typeof l === 'number') {
         if (i - l === 2) {
           rangeWithDots.push(l + 1);
         } else if (i - l > 2) {
