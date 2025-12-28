@@ -117,8 +117,16 @@ export default function CreateQuotationPage() {
   const [customerDetailsLoading, setCustomerDetailsLoading] = useState(true);
 
   // --- [ NEW STATE for each field: unsafe detection of actual missing values ] ---
+  type CustomerEmptyFields = {
+    customerName: boolean;
+    contactPerson: boolean;
+    email: boolean;
+    phoneNumber: boolean;
+    address: boolean;
+  };
+
   const [customerFieldsActuallyEmpty, setCustomerFieldsActuallyEmpty] =
-    useState({
+    useState<CustomerEmptyFields>({
       customerName: false,
       contactPerson: false,
       email: false,
@@ -399,8 +407,8 @@ export default function CreateQuotationPage() {
   };
 
   // Track which fields are actually empty (for server-side error display)
-  function setCustomerActuallyEmptyFields(fields: Record<string, boolean>) {
-    setCustomerFieldsActuallyEmpty(fields);
+  function setCustomerActuallyEmptyFields(fields: Partial<CustomerEmptyFields>) {
+    setCustomerFieldsActuallyEmpty((prev) => ({ ...prev, ...fields }));
     setTimeout(() => {
       setCustomerFieldsActuallyEmpty({
         customerName: false,
@@ -583,7 +591,7 @@ export default function CreateQuotationPage() {
                   .join(", ");
 
               // Highlight missing field(s)
-              const newFields: any = {
+              const newFields: Partial<CustomerEmptyFields> = {
                 customerName: false,
                 contactPerson: false,
                 email: false,
@@ -591,7 +599,7 @@ export default function CreateQuotationPage() {
                 address: false,
               };
               missingFields.forEach((f: string) => {
-                newFields[f] = true;
+                newFields[f as keyof CustomerEmptyFields] = true;
               });
               setCustomerActuallyEmptyFields(newFields);
             }
@@ -633,7 +641,7 @@ export default function CreateQuotationPage() {
                 )
                 .join(", ");
             // highlight the actual fields
-            const newFields: any = {
+            const newFields: Partial<CustomerEmptyFields> = {
               customerName: false,
               contactPerson: false,
               email: false,
@@ -641,7 +649,7 @@ export default function CreateQuotationPage() {
               address: false,
             };
             missingFields.forEach((f: string) => {
-              newFields[f] = true;
+              newFields[f as keyof CustomerEmptyFields] = true;
             });
             setCustomerActuallyEmptyFields(newFields);
           }
@@ -980,7 +988,7 @@ export default function CreateQuotationPage() {
             <section>
               <label
                 htmlFor="pdf-file"
-                className="block font-medium mb-1 flex items-center gap-2"
+                className="font-medium mb-1 flex items-center gap-2"
               >
                 {/* <FilePlus className="w-4 h-4 text-muted-foreground" /> */}
                 Attach Quotation PDF (optional)
@@ -998,7 +1006,7 @@ export default function CreateQuotationPage() {
               <div>
                 <label
                   htmlFor="tax-rate"
-                  className="block font-medium mb-1 flex items-center gap-2"
+                  className="font-medium mb-1 flex items-center gap-2"
                 >
                   {/* <Percent className="w-4 h-4 text-muted-foreground" /> */}
                   Tax Rate (%)
@@ -1016,7 +1024,7 @@ export default function CreateQuotationPage() {
               <div>
                 <label
                   htmlFor="validity-days"
-                  className="block font-medium mb-1 flex items-center gap-2"
+                  className="font-medium mb-1 flex items-center gap-2"
                 >
                   {/* <CalendarDays className="w-4 h-4 text-muted-foreground" /> */}
                   Validity Days
@@ -1034,7 +1042,7 @@ export default function CreateQuotationPage() {
               <div className="sm:col-span-2">
                 <label
                   htmlFor="notes"
-                  className="block font-medium mb-1 flex items-center gap-2"
+                  className="font-medium mb-1 flex items-center gap-2"
                 >
                   {/* <StickyNote className="w-4 h-4 text-muted-foreground" /> */}
                   Notes
@@ -1051,7 +1059,7 @@ export default function CreateQuotationPage() {
               <div className="sm:col-span-2">
                 <label
                   htmlFor="terms-and-conditions"
-                  className="block font-medium mb-1 flex items-center gap-2"
+                  className="font-medium mb-1 flex items-center gap-2"
                 >
                   {/* <StickyNote className="w-4 h-4 text-muted-foreground" /> */}
                   Terms and Conditions
