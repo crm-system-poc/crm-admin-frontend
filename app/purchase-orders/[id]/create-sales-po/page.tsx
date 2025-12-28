@@ -53,7 +53,7 @@ export default function CreateSalesPOPage() {
       );
 
       toast.success("Sales PO created successfully");
-      router.push(`/purchase-orders/${id}`);
+      router.push(`/sales-purchase-orders`);
     } catch (err: any) {
       toast.error(err?.response?.data?.error || "Failed to create Sales PO");
     } finally {

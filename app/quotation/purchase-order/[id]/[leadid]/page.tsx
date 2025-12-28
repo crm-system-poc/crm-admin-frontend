@@ -540,7 +540,7 @@ export default function CreatePurchaseOrder() {
 
       if (res.data?.success) {
         toast.success("Purchase Order created successfully ✅");
-        router.push(`/leads/${leadIdParam}`);
+        router.push(`/purchase-orders`);
       } else {
         toast.error(res.data?.error || "Failed to create Purchase Order");
       }

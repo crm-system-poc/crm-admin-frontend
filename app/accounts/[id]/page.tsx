@@ -109,11 +109,11 @@ export default function EditAccountPage() {
     }
   };
 
-  // For AddPaymentDialog success, reload payments
-  const handlePaymentSuccess = () => {
-    loadPayments();
-    loadRelatedData(); // In case you want side-reload
-  };
+  // // For AddPaymentDialog success, reload payments
+  // const handlePaymentSuccess = () => {
+  //   loadPayments();
+  //   loadRelatedData(); // In case you want side-reload
+  // };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
@@ -181,15 +181,15 @@ export default function EditAccountPage() {
   // If still loading main data, do not render form
   if (!account || !form) return null;
 
-  // Helper: get 'AddPaymentDialog', fallback empty for build
-  let AddPaymentDialog: any = () => null;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    AddPaymentDialog = require("@/components/accounts/AddPaymentDialog").default;
-  } catch (_e) {
-    // fallback noop
-    AddPaymentDialog = () => null;
-  }
+  // // Helper: get 'AddPaymentDialog', fallback empty for build
+  // let AddPaymentDialog: any = () => null;
+  // try {
+  //   // eslint-disable-next-line @typescript-eslint/no-var-requires
+  //   AddPaymentDialog = require("@/components/accounts/AddPaymentDialog").default;
+  // } catch (_e) {
+  //   // fallback noop
+  //   AddPaymentDialog = () => null;
+  // }
 
   return (
     <div className="max-w-8xl mx-auto p-6 space-y-4">
