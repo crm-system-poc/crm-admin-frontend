@@ -51,18 +51,11 @@ export default function CreateInquiryPage() {
       setIsSubmitting(true);
       await api.post("/api/inquiries", formData);
 
-      toast({
-        title: "Success!",
-        description: "Inquiry created successfully.",
-      });
+      toast.success("Inquiry created successfully.");
 
       router.push("/inquiries");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create inquiry. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to create inquiry. Please try again.");
       console.error("Failed to create inquiry:", error);
     } finally {
       setIsSubmitting(false);
