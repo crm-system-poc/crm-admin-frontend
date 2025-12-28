@@ -8,9 +8,10 @@ import { hasModule, hasAction } from "@/lib/permissions";
 interface ProtectedPageProps {
   module: string;
   children: React.ReactNode;
+  action?: "create" | "read" | "update" | "delete";
 }
 
-export default function ProtectedPage({ module, children }: ProtectedPageProps) {
+export default function ProtectedPage({ module, children, action }: ProtectedPageProps) {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -25,6 +26,10 @@ export default function ProtectedPage({ module, children }: ProtectedPageProps) 
   }
 
   if (!hasModule(user.permissions, module)) {
+    return <p className="text-red-500 p-8">Unauthorized Access</p>;
+  }
+
+  if (action && !hasAction(user.permissions, module, action)) {
     return <p className="text-red-500 p-8">Unauthorized Access</p>;
   }
 
