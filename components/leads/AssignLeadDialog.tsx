@@ -29,20 +29,36 @@ import {
   CommandEmpty,
 } from "@/components/ui/command";
 
+type User = { id: string; name?: string; role?: string };
+
+type AssignedUser = {
+  user: string;
+  permissions: { read: boolean; update: boolean; delete: boolean };
+};
+
+interface AssignLeadDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  leadId: string;
+  currentAssigneeName?: string;
+  onAssigned?: () => void;
+}
+
 export function AssignLeadDialog({
   open,
   onOpenChange,
   leadId,
+  currentAssigneeName,
   onAssigned,
-}) {
+}: AssignLeadDialogProps) {
   const { user } = useAuth();
   const isSuperAdmin = user?.systemrole === "SuperAdmin";
 
-  const [users, setUsers] = useState([]);
-  const [assignedUsers, setAssignedUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [assignedUsers, setAssignedUsers] = useState<AssignedUser[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [popoverOpen, setPopoverOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!open || !isSuperAdmin) return;
@@ -61,9 +77,12 @@ export function AssignLeadDialog({
         );
 
         const userRes = await api.get("/api/admin/users?isActive=true");
-        setUsers(userRes.data?.users ?? userRes.data);
+        // Normalize response to array of users
+        const fetchedUsers = userRes.data?.users ?? userRes.data ?? [];
+        setUsers(fetchedUsers);
 
-      } catch {
+      } catch (err) {
+        console.error(err);
         toast.error("Failed to load users");
       } finally {
         setLoading(false);
@@ -71,7 +90,7 @@ export function AssignLeadDialog({
     };
 
     loadData();
-  }, [open]);
+  }, [open, isSuperAdmin, leadId]);
 
   const toggleUser = (id: string) => {
     const exists = assignedUsers.some((u) => u.user === id);
@@ -95,7 +114,7 @@ export function AssignLeadDialog({
     }
   };
 
-  const togglePermission = (id: string, key: string) => {
+  const togglePermission = (id: string, key: keyof AssignedUser['permissions']) => {
     setAssignedUsers((prev) =>
       prev.map((u) =>
         u.user === id
