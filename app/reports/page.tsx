@@ -23,7 +23,7 @@ import DashboardOverview from "@/components/reports/DashboardOverview";
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
-  const { dashboardData, isLoading, refreshReports } = useReports();
+  const { dashboardData, salesFunnelData, isLoading, refreshReports } = useReports();
 
   return (
     // <div className="container mx-auto p-6 space-y-6">
@@ -65,9 +65,9 @@ export default function ReportsPage() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          {dashboardData && (
+          {salesFunnelData && (
             <SalesFunnelReport
-              data={dashboardData}
+              data={salesFunnelData}
               isLoading={isLoading}
               view="detailed"
             />

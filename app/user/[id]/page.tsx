@@ -74,7 +74,7 @@ export default function EditUserPage() {
     }
   });
 
-  const watchedPermissions = watch("permissions");
+  const watchedPermissions = watch("permissions") as Record<string, any> | undefined;
 
   const fetchUser = async () => {
     try {
@@ -88,12 +88,12 @@ export default function EditUserPage() {
 
       if (user.permissions) {
         Object.keys(user.permissions).forEach((key) =>
-          setValue(`permissions.${key}`, user.permissions[key])
+          setValue(`permissions.${key}` as any, user.permissions[key as any])
         );
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response?.data?.message || "Failed to load user details");
+      toast.error((error as any).response?.data?.message || "Failed to load user details");
       router.push("/user");
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ export default function EditUserPage() {
     fetchUser();
   }, []);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     try {
       setSaving(true);
 
@@ -116,15 +116,15 @@ export default function EditUserPage() {
       router.push("/user");
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Failed to update user");
+      toast.error((error as any).response?.data?.message || "Failed to update user");
     } finally {
       setSaving(false);
     }
   };
 
-  const toggleAllActions = (moduleKey, actionKey, checked) => {
+  const toggleAllActions = (moduleKey: string, actionKey: string, checked: boolean) => {
     Object.keys(CRUDActionsTemplate).forEach((action) => {
-      setValue(`permissions.${actionKey}.${action}`, checked);
+      setValue(`permissions.${actionKey}.${action}` as any, checked);
     });
   };
 
@@ -209,7 +209,7 @@ export default function EditUserPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3 flex-1">
                             <Controller
-                              name={`permissions.${mod.key}`}
+                              name={`permissions.${mod.key}` as any}
                               control={control}
                               render={({ field }) => (
                                 <Checkbox
@@ -265,7 +265,7 @@ export default function EditUserPage() {
                               {Object.keys(CRUDActionsTemplate).map((action) => (
                                 <Controller
                                   key={action}
-                                  name={`permissions.${mod.actionKey}.${action}`}
+                                  name={`permissions.${mod.actionKey}.${action}` as any}
                                   control={control}
                                   render={({ field }) => (
                                     <div className="flex items-center gap-2 rounded-md border bg-background p-3 hover:bg-accent transition-colors">
@@ -274,7 +274,7 @@ export default function EditUserPage() {
                                         onCheckedChange={field.onChange}
                                       />
                                       <Label className="text-sm font-medium capitalize cursor-pointer flex items-center gap-1">
-                                        <span>{crudIcons[action]}</span>
+                                        <span>{crudIcons[action as keyof typeof crudIcons]}</span>
                                         {action}
                                       </Label>
                                     </div>

@@ -29,23 +29,30 @@ import {
   CommandEmpty,
 } from "@/components/ui/command";
 
+type AssignPurchaseOrderDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  purchaseOrderId: string;
+  onAssigned?: () => void;
+};
+
 export function AssignPurchaseOrderDialog({
   open,
   onOpenChange,
   purchaseOrderId,
   onAssigned,
-}) {
+}: AssignPurchaseOrderDialogProps) {
   const { user } = useAuth();
   const isSuperAdmin = user?.systemrole === "SuperAdmin";
 
-  const [users, setUsers] = useState([]);
-  const [assignedUsers, setAssignedUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [assignedUsers, setAssignedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
-    if (!open || !isSuperAdmin) return;
+    if (!open || !isSuperAdmin || !purchaseOrderId) return;
 
     const loadData = async () => {
       try {
@@ -71,7 +78,7 @@ export function AssignPurchaseOrderDialog({
     };
 
     loadData();
-  }, [open]);
+  }, [open, purchaseOrderId]);
 
   const toggleUser = (id: string) => {
     const exists = assignedUsers.some((u) => u.user === id);

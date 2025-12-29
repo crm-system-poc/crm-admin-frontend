@@ -33,25 +33,30 @@ export function AssignQuotationDialog({
   open,
   onOpenChange,
   quotationId,
+  quotation,
   onAssigned,
-}) {
+}: any) {
   const { user } = useAuth();
   const isSuperAdmin = user?.systemrole === "SuperAdmin";
 
-  const [users, setUsers] = useState([]);
-  const [assignedUsers, setAssignedUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [assignedUsers, setAssignedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
+  // Accept either `quotationId` or `quotation` (object or id) for backwards compatibility
+  const effectiveQuotationId =
+    quotationId ?? (quotation && (quotation.id ?? quotation));
+
   useEffect(() => {
-    if (!open || !isSuperAdmin) return;
+    if (!open || !isSuperAdmin || !effectiveQuotationId) return;
 
     const loadData = async () => {
       try {
         setLoading(true);
 
-        const quotationRes = await api.get(`/api/quotations/${quotationId}`);
+        const quotationRes = await api.get(`/api/quotations/${effectiveQuotationId}`);
         const assigned = quotationRes.data?.data?.assignedUsers || [];
         setAssignedUsers(
           assigned.map((a: any) => ({
@@ -71,7 +76,7 @@ export function AssignQuotationDialog({
     };
 
     loadData();
-  }, [open]);
+  }, [open, effectiveQuotationId]);
 
   const toggleUser = (id: string) => {
     const exists = assignedUsers.some((u) => u.user === id);

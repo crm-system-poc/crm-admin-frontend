@@ -72,14 +72,14 @@ export default function CreateUserPage() {
     },
   });
 
-  const watchedPermissions = watch("permissions");
+  const watchedPermissions = watch("permissions") as Record<string, any> | undefined;
 
   // Helper: when module is checked, set read=true in actions and disable unchecking
   const handleModuleToggle = (mod: typeof modules[number], value: boolean) => {
-    setValue(`permissions.${mod.key}`, value);
+    setValue(`permissions.${mod.key}` as any, value);
     if (mod.actionKey) {
       // Always enable read when module is toggled on
-      setValue(`permissions.${mod.actionKey}.read`, value, { shouldDirty: true, shouldTouch: true });
+      setValue(`permissions.${mod.actionKey}.read` as any, value, { shouldDirty: true, shouldTouch: true });
     }
   };
 
@@ -88,11 +88,11 @@ export default function CreateUserPage() {
     mod: typeof modules[number],
     checked: boolean
   ) => {
-    if (mod.actionKey && watchedPermissions[mod.key]) {
+    if (mod.actionKey && watchedPermissions?.[mod.key]) {
       // ignore manual unchecking if module checked
       return;
     }
-    setValue(`permissions.${mod.actionKey}.read`, checked, { shouldDirty: true, shouldTouch: true });
+    setValue(`permissions.${mod.actionKey}.read` as any, checked, { shouldDirty: true, shouldTouch: true });
   };
 
   const onSubmit = async (data: any) => {
@@ -219,7 +219,7 @@ export default function CreateUserPage() {
                       {/* Module Toggle */}
                       <div className="flex items-center gap-3">
                         <Controller
-                          name={`permissions.${mod.key}`}
+                          name={`permissions.${mod.key}` as any}
                           control={control}
                           render={({ field }) => (
                             <Checkbox
@@ -228,7 +228,7 @@ export default function CreateUserPage() {
                               onCheckedChange={(checked) => {
                                 field.onChange(checked);
                                 if (mod.actionKey) {
-                                  setValue(`permissions.${mod.actionKey}.read`, !!checked, { shouldDirty: true, shouldTouch: true });
+                                  setValue(`permissions.${mod.actionKey}.read` as any, !!checked, { shouldDirty: true, shouldTouch: true });
                                 }
                               }}
                             />
@@ -243,7 +243,7 @@ export default function CreateUserPage() {
                       </div>
 
                       {/* CRUD Actions */}
-                      {mod.actionKey && watchedPermissions[mod.key] && (
+                      {mod.actionKey && watchedPermissions?.[mod.key] && (
                         <div className="ml-7 p-4 rounded-lg bg-muted/50 border">
                           <p className="text-sm font-medium mb-3 text-muted-foreground">
                             Allowed Actions
@@ -252,7 +252,7 @@ export default function CreateUserPage() {
                             {Object.keys(CRUDActionsTemplate).map((action) => (
                               <Controller
                                 key={action}
-                                name={`permissions.${mod.actionKey}.${action}`}
+                                name={`permissions.${mod.actionKey}.${action}` as any}
                                 control={control}
                                 render={({ field }) => {
                                   if (action === "read") {
@@ -261,9 +261,9 @@ export default function CreateUserPage() {
                                         <Checkbox
                                           id={`${mod.actionKey}-${action}`}
                                           checked={true}
-                                          disabled={watchedPermissions[mod.key]}
+                                          disabled={watchedPermissions?.[mod.key]}
                                           onCheckedChange={() => {
-                                            handleReadActionChange(mod, !watchedPermissions[mod.actionKey]?.read);
+                                            handleReadActionChange(mod, !watchedPermissions?.[mod.actionKey]?.read);
                                           }}
                                         />
                                         <Label

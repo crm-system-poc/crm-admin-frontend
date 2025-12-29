@@ -5,12 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import React from 'react';
 
-export default function InquiryForm({ inquiry, onSubmit }) {
-  const [form, setForm] = React.useState(inquiry || {});
+type InquiryFormProps = {
+  inquiry?: Record<string, any>;
+  onSubmit: (payload: Record<string, any>) => void;
+};
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+export default function InquiryForm({ inquiry, onSubmit }: InquiryFormProps) {
+  const [form, setForm] = React.useState<Record<string, any>>(inquiry || {});
 
-  const handleSubmit = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(form);
   };

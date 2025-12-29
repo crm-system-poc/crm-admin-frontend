@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
@@ -48,14 +48,19 @@ function flattenExpiringSoon(apiData: any) {
 
 export default function ExpiringLicenseListingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const queryFilter = (searchParams?.get("filter") as string) || "all"; // all | expired | expiring-soon
-  const queryRange = (searchParams?.get("range") as string) || "monthly"; // monthly | quarterly | yearly
-
   const [apiData, setApiData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  // Initialize filter mode and range from query params on client side only
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const qf = (sp.get("filter") as string) || "all";
+    const qr = (sp.get("range") as string) || "monthly";
+    setFilterMode(qf);
+    setRangeMode(qr);
+  }, []);
 
   // Table UI state
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -63,14 +68,8 @@ export default function ExpiringLicenseListingPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
-  const [filterMode, setFilterMode] = useState<string>(queryFilter);
-  const [rangeMode, setRangeMode] = useState<string>(queryRange);
-
-  useEffect(() => {
-    // keep filterMode in sync with query params initially
-    setFilterMode(queryFilter);
-    setRangeMode(queryRange);
-  }, [queryFilter, queryRange]);
+  const [filterMode, setFilterMode] = useState<string>("all");
+  const [rangeMode, setRangeMode] = useState<string>("monthly");
 
   useEffect(() => {
     const fetchData = async () => {

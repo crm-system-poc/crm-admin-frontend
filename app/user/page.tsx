@@ -58,13 +58,13 @@ import { useAuth } from "@/components/context/AuthContext";
 
 export default function GetAllUserPage() {
   const router = useRouter();
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const { user, logout } = useAuth();
   const permissions = user?.permissions || {};
 
@@ -78,7 +78,7 @@ export default function GetAllUserPage() {
       setUsers(data || []);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to fetch users");
+      setError((err as any).response?.data?.message || "Failed to fetch users");
     } finally {
       setLoading(false);
     }
@@ -92,11 +92,11 @@ export default function GetAllUserPage() {
     router.push("/user/create");
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (id: string) => {
     router.push(`/user/${id}`);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     setUserToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -112,7 +112,7 @@ export default function GetAllUserPage() {
       setUserToDelete(null);
     } catch (err) {
       console.error(err);
-      toast.error(error.response?.data?.message || "Failed to delete user");
+      toast.error((err as any).response?.data?.message || "Failed to delete user");
     } finally {
       setDeletingId(null);
     }

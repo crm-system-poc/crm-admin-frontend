@@ -336,7 +336,7 @@ export default function QuotationDetail() {
                 onChange={(e) => setTerms(e.target.value)}
                 placeholder="Terms and Conditions"
                 readOnly
-                minRows={2}
+                rows={2}
                 className="resize-none"
               />
             </div>

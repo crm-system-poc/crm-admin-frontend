@@ -471,7 +471,7 @@ export default function QuotationList() {
         <AssignQuotationDialog
           open={assignDialogOpen}
           onOpenChange={setAssignDialogOpen}
-          quotation={quotationToAssign}
+          quotationId={quotationToAssign?.id || quotationToAssign}
           onAssigned={() => {
             setAssignDialogOpen(false);
             setQuotationToAssign(null);

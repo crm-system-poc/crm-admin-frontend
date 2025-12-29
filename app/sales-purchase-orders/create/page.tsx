@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,15 +30,24 @@ type Item = {
 
 export default function CreateSalesPOPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const basePoIdFromQuery = searchParams.get("basePoId");
+  const [basePoIdFromQuery, setBasePoIdFromQuery] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    setBasePoIdFromQuery(sp.get("basePoId"));
+  }, []);
   const [loadingBasePOs, setLoadingBasePOs] = useState(false);
   const [loadingBasePODetails, setLoadingBasePODetails] = useState(false);
   const [basePOs, setBasePOs] = useState<any[]>([]);
-  const [selectedBasePOId, setSelectedBasePOId] = useState<string>(basePoIdFromQuery || "none");
+  const [selectedBasePOId, setSelectedBasePOId] = useState<string>("none");
   const [selectedBasePO, setSelectedBasePO] = useState<any>(null);
+
+  useEffect(() => {
+    if (basePoIdFromQuery) setSelectedBasePOId(basePoIdFromQuery);
+  }, [basePoIdFromQuery]);
   const [items, setItems] = useState<Item[]>([
     {
       productId: "",
