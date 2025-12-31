@@ -18,7 +18,14 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { hasAction } from "@/lib/permissions";
@@ -77,6 +84,16 @@ function removeColorFallbackCSS() {
   if (style) style.remove();
 }
 
+// LICENSE_TYPE_OPTIONS: restricted to ['perpetual', 'saas', 'sro', 'mro', 'xaas', 'other']
+const LICENSE_TYPE_OPTIONS = [
+  { value: "perpetual", label: "Perpetual" },
+  { value: "saas", label: "SaaS" },
+  { value: "sro", label: "SRO" },
+  { value: "mro", label: "MRO" },
+  { value: "xaas", label: "XaaS" },
+  { value: "other", label: "Other" },
+];
+
 export default function PurchaseOrderDetail() {
   const { id } = useParams();
   const [mounted, setMounted] = useState(false);
@@ -115,6 +132,9 @@ export default function PurchaseOrderDetail() {
     pdfName: "",
   });
 
+  // Local edit states for item licenseType and expiry
+  const [editedItems, setEditedItems] = useState<any[]>([]);
+
   // Ref for the main content to export as PDF
   const pdfRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +142,7 @@ export default function PurchaseOrderDetail() {
     setMounted(true);
   }, []);
 
+  // On fetch, set both order and editable local items state, to allow editing
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -161,6 +182,22 @@ export default function PurchaseOrderDetail() {
           pdfUrl: data.quotationId?.pdfFile?.s3Url || "",
           pdfName: data.quotationId?.pdfFile?.originalName || "",
         });
+
+        // Copy items for local editing, enforce allowed licenseType enum for UI only (empty string otherwise)
+        setEditedItems(
+          Array.isArray(data.items)
+            ? data.items.map((item: any) => ({
+                ...item,
+                licenseType:
+                  LICENSE_TYPE_OPTIONS.find(opt => opt.value === item.licenseType)
+                    ? item.licenseType
+                    : "",
+                licenseExpiryDate: item.licenseExpiryDate
+                  ? formatDate(item.licenseExpiryDate)
+                  : "",
+              }))
+            : []
+        );
       } catch (error) {
         console.error("Failed to fetch purchase order details", error);
         toast.error("Failed to load purchase order details");
@@ -217,6 +254,87 @@ export default function PurchaseOrderDetail() {
     } catch (error) {
       console.error("Failed to update status", error);
       toast.error("Failed to update status");
+    }
+  };
+
+  // Handle local change of licenseType in editedItems
+  const handleEditLicenseType = (rowIndex: number, val: string) => {
+    setEditedItems((prev) =>
+      prev.map((it, idx) =>
+        idx === rowIndex ? { ...it, licenseType: val } : it
+      )
+    );
+  };
+
+  // Handle local change of licenseExpiryDate in editedItems
+  const handleEditExpiryDate = (rowIndex: number, val: string) => {
+    setEditedItems((prev) =>
+      prev.map((it, idx) =>
+        idx === rowIndex ? { ...it, licenseExpiryDate: val } : it
+      )
+    );
+  };
+
+  // Utility to validate future date input (yyyy-mm-dd format)
+  function isFutureDate(yyyyMmDd: string) {
+    if (!yyyyMmDd) return false;
+    const inputDate = new Date(yyyyMmDd);
+    const now = new Date();
+    // Allow today as valid? Use >= if so
+    return inputDate > now;
+  }
+
+  // Save inline licenseType/expiry edits to server
+  const handleSaveLicenseForItem = async (rowIndex: number) => {
+    if (!order) return;
+    const item = editedItems[rowIndex];
+    if (!item) return;
+
+    // Enforce enum: only allow the enum licenseType values
+    if (!LICENSE_TYPE_OPTIONS.some(opt => opt.value === item.licenseType)) {
+      toast.error("License type must be one of the allowed types.");
+      return;
+    }
+
+    // Check for future date
+    if (item.licenseExpiryDate && !isFutureDate(item.licenseExpiryDate)) {
+      toast.error("Expiry date must be in the future");
+      return;
+    }
+
+    try {
+      // PATCH/PUT update to single item licenseType & expiry
+      await api.put(
+        `/api/purchase-orders/${id}/items/${item._id || item.productId}`,
+        {
+          licenseType: item.licenseType,
+          licenseExpiryDate: item.licenseExpiryDate || null,
+        }
+      );
+
+      toast.success("License updated!");
+
+      // Optionally, reload the order for freshness
+      const res = await api.get(`/api/purchase-orders/${id}`);
+      const data = res.data.data;
+      setOrder(data);
+      setEditedItems(
+        Array.isArray(data.items)
+          ? data.items.map((item: any) => ({
+              ...item,
+              licenseType:
+                LICENSE_TYPE_OPTIONS.find(opt => opt.value === item.licenseType)
+                  ? item.licenseType
+                  : "",
+              licenseExpiryDate: item.licenseExpiryDate
+                ? formatDate(item.licenseExpiryDate)
+                : "",
+            }))
+          : []
+      );
+    } catch (err) {
+      toast.error("Failed to update license info");
+      console.error(err);
     }
   };
 
@@ -315,8 +433,7 @@ export default function PurchaseOrderDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex text-2xl flex-wrap items-center gap-2">
-        Purchase Order
-      
+            Purchase Order
           </CardTitle>
           <Button
             variant="outline"
@@ -372,7 +489,6 @@ export default function PurchaseOrderDetail() {
                   id="contactPerson-input"
                   value={customerDetails.contactPerson}
                   readOnly
-                  
                 />
               </div>
               <div>
@@ -386,7 +502,6 @@ export default function PurchaseOrderDetail() {
                   id="email-input"
                   value={customerDetails.email}
                   readOnly
-                
                 />
               </div>
               <div>
@@ -400,7 +515,6 @@ export default function PurchaseOrderDetail() {
                   id="phoneNumber-input"
                   value={customerDetails.phoneNumber}
                   readOnly
-                  
                 />
               </div>
               <div>
@@ -414,7 +528,6 @@ export default function PurchaseOrderDetail() {
                   id="country-input"
                   value={customerDetails.country}
                   readOnly
-                
                 />
               </div>
               <div className="flex items-center gap-4 mt-5">
@@ -489,27 +602,86 @@ export default function PurchaseOrderDetail() {
                   <TableHead>License Type</TableHead>
                   <TableHead>License Expiry</TableHead>
                   <TableHead>Total Price</TableHead>
+                  {hasAction(
+                    userPermissions,
+                    "managePurchaseOrder",
+                    "update"
+                  ) && <TableHead className="text-center">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(order.items || []).map((item: any, index: number) => (
-                  <TableRow key={item._id || item.productId || index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{item.productId}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.unitPrice}</TableCell>
-                    <TableCell className="capitalize">
-                      {item.licenseType}
-                    </TableCell>
-                    <TableCell>
-                      {item.licenseExpiryDate
-                        ? formatDate(item.licenseExpiryDate)
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{item.totalPrice}</TableCell>
-                  </TableRow>
-                ))}
+                {(editedItems || []).map((item: any, index: number) => {
+                  const editAllowed = hasAction(
+                    userPermissions,
+                    "managePurchaseOrder",
+                    "update"
+                  );
+                  return (
+                    <TableRow key={item._id || item.productId || index}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{item.productId}</TableCell>
+                      <TableCell>{item.description}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.unitPrice}</TableCell>
+                      <TableCell className="capitalize">
+                        {editAllowed ? (
+                          <Select
+                            value={item.licenseType || ""}
+                            onValueChange={(val) =>
+                              handleEditLicenseType(index, val)
+                            }
+                          >
+                            <SelectTrigger className="min-w-[110px]">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {LICENSE_TYPE_OPTIONS.map((opt) => (
+                                <SelectItem value={opt.value} key={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          // Show label to user for display (instead of raw enum value)
+                          LICENSE_TYPE_OPTIONS.find(
+                            (opt) => opt.value === item.licenseType
+                          )?.label || item.licenseType || "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editAllowed ? (
+                          <Input
+                            type="date"
+                            min={new Date(Date.now() + 24 * 60 * 60 * 1000) // tomorrow
+                              .toISOString()
+                              .slice(0, 10)}
+                            value={item.licenseExpiryDate || ""}
+                            onChange={(e) =>
+                              handleEditExpiryDate(index, e.target.value)
+                            }
+                          />
+                        ) : item.licenseExpiryDate ? (
+                          formatDate(item.licenseExpiryDate)
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>{item.totalPrice}</TableCell>
+                      {editAllowed && (
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveLicenseForItem(index)}
+                            variant="outline"
+                          >
+                            Save
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 
+// Updated Item type to include oemPrice and remove unitPrice
 type Item = {
   productId: string;
   description: string;
   quantity: number;
   licenseType: string;
   licenseExpiryDate: string;
-  unitPrice: number;
+  oemPrice: number;
 };
 
 export default function EditSalesPOPage() {
@@ -51,7 +52,7 @@ export default function EditSalesPOPage() {
         setFetching(true);
         const res = await api.get(`/api/sales-purchase-orders/${id}`);
         const data = res.data.data;
-        
+
         setForm({
           poNumber: data.poNumber || "",
           poDate: data.poDate
@@ -61,8 +62,14 @@ export default function EditSalesPOPage() {
           deliveryTerms: data.deliveryTerms || "",
           notes: data.notes || "",
           status: data.status || "draft",
-          amcPeriod: data.amcPeriod !== null && data.amcPeriod !== undefined ? String(data.amcPeriod) : "",
-          rewardId: data.rewardId !== null && data.rewardId !== undefined ? String(data.rewardId) : "",
+          amcPeriod:
+            data.amcPeriod !== null && data.amcPeriod !== undefined
+              ? String(data.amcPeriod)
+              : "",
+          rewardId:
+            data.rewardId !== null && data.rewardId !== undefined
+              ? String(data.rewardId)
+              : "",
         });
 
         if (data.items && data.items.length > 0) {
@@ -75,7 +82,10 @@ export default function EditSalesPOPage() {
               licenseExpiryDate: item.licenseExpiryDate
                 ? new Date(item.licenseExpiryDate).toISOString().split("T")[0]
                 : "",
-              unitPrice: item.unitPrice || 0,
+              oemPrice:
+                typeof item.oemPrice !== "undefined"
+                  ? item.oemPrice
+                  : 0,
             }))
           );
         } else {
@@ -86,7 +96,7 @@ export default function EditSalesPOPage() {
               quantity: 1,
               licenseType: "perpetual",
               licenseExpiryDate: "",
-              unitPrice: 0,
+              oemPrice: 0,
             },
           ]);
         }
@@ -112,7 +122,7 @@ export default function EditSalesPOPage() {
         quantity: 1,
         licenseType: "perpetual",
         licenseExpiryDate: "",
-        unitPrice: 0,
+        oemPrice: 0,
       },
     ]);
   };
@@ -123,6 +133,7 @@ export default function EditSalesPOPage() {
     }
   };
 
+  // Need to update type for "field" to allow oemPrice
   const updateItem = (index: number, field: keyof Item, value: any) => {
     const updated = [...items];
     updated[index] = { ...updated[index], [field]: value };
@@ -149,13 +160,15 @@ export default function EditSalesPOPage() {
         items: items.map((item) => ({
           ...item,
           quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
+          oemPrice: Number(item.oemPrice),
         })),
       });
       toast.success("Sales PO updated successfully");
       router.push("/sales-purchase-orders");
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Failed to update Sales PO");
+      toast.error(
+        error?.response?.data?.error || "Failed to update Sales PO"
+      );
     } finally {
       setLoading(false);
     }
@@ -231,7 +244,12 @@ export default function EditSalesPOPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <Label className="text-lg font-semibold">Items</Label>
-                <Button type="button" onClick={addItem} variant="outline" size="sm">
+                <Button
+                  type="button"
+                  onClick={addItem}
+                  variant="outline"
+                  size="sm"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Item
                 </Button>
@@ -280,16 +298,16 @@ export default function EditSalesPOPage() {
                           />
                         </div>
                         <div>
-                          <Label>Unit Price</Label>
+                          <Label>OEM Price</Label>
                           <Input
                             type="number"
                             min="0"
                             step="0.01"
-                            value={item.unitPrice}
+                            value={item.oemPrice}
                             onChange={(e) =>
                               updateItem(
                                 index,
-                                "unitPrice",
+                                "oemPrice",
                                 parseFloat(e.target.value) || 0
                               )
                             }
@@ -308,7 +326,9 @@ export default function EditSalesPOPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="perpetual">Perpetual</SelectItem>
+                              <SelectItem value="perpetual">
+                                Perpetual
+                              </SelectItem>
                               <SelectItem value="saas">SaaS</SelectItem>
                               <SelectItem value="sro">SRO</SelectItem>
                               <SelectItem value="mro">MRO</SelectItem>
@@ -426,4 +446,3 @@ export default function EditSalesPOPage() {
     </div>
   );
 }
-

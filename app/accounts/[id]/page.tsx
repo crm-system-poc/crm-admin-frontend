@@ -205,25 +205,26 @@ export default function EditAccountPage() {
       </Button> */}
 
       {/* Refresh Button Add: */}
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchAll}
-          disabled={refreshing}
-          aria-label="Refresh"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
+     
 
       {/* Unified Big Tabs - Customer Details, Leads, Quotation, Purchase Orders */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-2xl font-semibold">
             Account details
           </CardTitle>
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchAll}
+              disabled={refreshing}
+              aria-label="Refresh"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="customer-details" className="w-full">
@@ -571,6 +572,7 @@ export default function EditAccountPage() {
                     <TableHeader className="bg-muted/40">
                       <TableRow>
                         <TableHead>PO Number</TableHead>
+                        <TableHead>PO Type</TableHead>
                         <TableHead>Customer Name</TableHead>
                         <TableHead>Total Amount</TableHead>
                         <TableHead>Status</TableHead>
@@ -582,6 +584,7 @@ export default function EditAccountPage() {
                       {relatedData.purchaseOrders.data.map((po: any) => (
                         <TableRow key={po._id || po.id}>
                           <TableCell>{po.poNumber}</TableCell>
+                          <TableCell>{po.poType}</TableCell>
                           <TableCell>
                             {po.customerDetails?.customerName ||
                               po.leadId?.customerName ||

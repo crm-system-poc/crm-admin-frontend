@@ -25,13 +25,13 @@ type Item = {
   quantity: number;
   licenseType: string;
   licenseExpiryDate: string;
-  unitPrice: number;
+  oemPrice: number;
 };
 
 export default function CreateSalesPOPage() {
   const router = useRouter();
   const [basePoIdFromQuery, setBasePoIdFromQuery] = useState<string | null>(null);
-  
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function CreateSalesPOPage() {
       quantity: 1,
       licenseType: "perpetual",
       licenseExpiryDate: "",
-      unitPrice: 0,
+      oemPrice: 0,
     },
   ]);
 
@@ -76,9 +76,9 @@ export default function CreateSalesPOPage() {
       try {
         setLoadingBasePOs(true);
         // Fetch base POs
-        const res = await api.get("/api/purchase-orders?limit=1000");
+        const res = await api.get("/api/purchase-orders?limit=100");
         const allPOs = res.data.data;
-        
+
         // Filter only base POs
         const basePOsList = allPOs.filter(
           (po: any) => po.poType === "base"
@@ -138,7 +138,7 @@ export default function CreateSalesPOPage() {
           quantity: 1,
           licenseType: "perpetual",
           licenseExpiryDate: "",
-          unitPrice: 0,
+          oemPrice: 0,
         },
       ]);
       return;
@@ -150,7 +150,7 @@ export default function CreateSalesPOPage() {
       const res = await api.get(`/api/purchase-orders/${basePOId}`);
       const basePO = res.data.data;
       setSelectedBasePO(basePO);
-      
+
       // Ensure we use the correct ID format from the fetched PO
       const poId = basePO._id || basePO.id || basePOId;
       setSelectedBasePOId(String(poId));
@@ -180,7 +180,7 @@ export default function CreateSalesPOPage() {
             licenseExpiryDate: item.licenseExpiryDate
               ? new Date(item.licenseExpiryDate).toISOString().split("T")[0]
               : "",
-            unitPrice: item.unitPrice || 0,
+            oemPrice: item.oemPrice ?? 0,
           }))
         );
       } else {
@@ -191,7 +191,7 @@ export default function CreateSalesPOPage() {
             quantity: 1,
             licenseType: "perpetual",
             licenseExpiryDate: "",
-            unitPrice: 0,
+            oemPrice: 0,
           },
         ]);
       }
@@ -229,7 +229,7 @@ export default function CreateSalesPOPage() {
         quantity: 1,
         licenseType: "perpetual",
         licenseExpiryDate: "",
-        unitPrice: 0,
+        oemPrice: 0,
       },
     ]);
   };
@@ -261,13 +261,13 @@ export default function CreateSalesPOPage() {
 
     try {
       setLoading(true);
-      
+
       const payload: any = {
         ...form,
         items: items.map((item) => ({
           ...item,
           quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
+          oemPrice: Number(item.oemPrice),
         })),
       };
 
@@ -460,16 +460,16 @@ export default function CreateSalesPOPage() {
                           />
                         </div>
                         <div>
-                          <Label>Unit Price</Label>
+                          <Label>OEM Price</Label>
                           <Input
                             type="number"
                             min="0"
                             step="0.01"
-                            value={item.unitPrice}
+                            value={item.oemPrice}
                             onChange={(e) =>
                               updateItem(
                                 index,
-                                "unitPrice",
+                                "oemPrice",
                                 parseFloat(e.target.value) || 0
                               )
                             }

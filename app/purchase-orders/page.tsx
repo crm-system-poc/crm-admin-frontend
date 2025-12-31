@@ -50,7 +50,7 @@ import { AssignPurchaseOrderDialog } from "@/components/purchaseOrders/AssignPur
 /* ---------------- TYPES ---------------- */
 
 type PurchaseOrder = {
-  id: string;
+  _id: string;
   poNumber: string;
   status: string;
   poType?:'base'|'sales'|'service';
@@ -104,6 +104,9 @@ export default function PurchaseOrderList() {
     user?.role === "Manager" ||
     hasAction(user?.permissions, "managePurchaseOrder", "update");
 
+  // For delete feedback
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   /* ---------------- FETCH ---------------- */
 
   const fetchOrders = async (page = 1) => {
@@ -140,18 +143,25 @@ export default function PurchaseOrderList() {
   /* ---------------- DELETE ---------------- */
 
   const confirmDelete = async () => {
+    setDeleteError(null);
     if (!deleteId) return;
-    await api.delete(`/api/purchase-orders/${deleteId}`);
-    fetchOrders(pagination.page);
-    setDeleteId(null);
+    try {
+      await api.delete(`/api/purchase-orders/${deleteId}`);
+      setDeleteId(null); // Close dialog and clear state AFTER successful delete
+      fetchOrders(pagination.page);
+    } catch (err: any) {
+      setDeleteError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to delete purchase order. Please try again."
+      );
+    }
   };
 
   /* ---------------- UI ---------------- */
 
   return (
     <div className="p-4 md:p-6 max-w-8xl mx-auto space-y-4">
-      {/* <Card>
-        <CardHeader className="space-y-4"> */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <h1 className="text-2xl font-semibold">Purchase Orders</h1>
 
@@ -216,9 +226,7 @@ export default function PurchaseOrderList() {
           </div>
         </div>
       </div>
-      {/* </CardHeader> */}
 
-      {/* <CardContent> */}
       {/* DESKTOP TABLE */}
       <div className="hidden md:block border rounded-md shadow-sm overflow-hidden">
         <Table>
@@ -235,100 +243,116 @@ export default function PurchaseOrderList() {
           </TableHeader>
 
           <TableBody>
-            {filteredOrders.map((po, i) => (
-              <TableRow key={po.id}>
-                <TableCell>{i + 1}</TableCell>
-                <TableCell>{po?.poNumber}</TableCell>
-                <TableCell>{po?.customerDetails?.customerName}</TableCell>
-                <TableCell>{po?.customerDetails?.phoneNumber}</TableCell>
-                <TableCell>{po?.quotationId?.quoteId || "-"}</TableCell>
-                <TableCell>
-                  <Badge className="capitalize">{po?.status}</Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => router.push(`/purchase-orders/${po.id}`)}
-                      >
-                        View details
-                      </DropdownMenuItem>
-
-                      {po.poType === "base" && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/sales-purchase-orders/create?basePoId=${po.id}`
-                            )
-                          }
-                        >
-                          Create Sales PO
-                        </DropdownMenuItem>
-                      )}
-
-                      {canAssign && (
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setPoToAssign(po);
-                            setAssignOpen(true);
-                          }}
-                        >
-                          Assign PO
-                        </DropdownMenuItem>
-                      )}
-
-                      {po.poPdf?.s3Url && (
-                        <DropdownMenuItem asChild>
-                          <a href={po.poPdf.s3Url} target="_blank">
-                            View PDF
-                          </a>
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setDeleteId(po.id)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {filteredOrders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  No purchase orders found.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredOrders.map((po, i) => (
+                <TableRow key={po._id}>
+                  <TableCell>{i + 1}</TableCell>
+                  <TableCell>{po?.poNumber}</TableCell>
+                  <TableCell>{po?.customerDetails?.customerName}</TableCell>
+                  <TableCell>{po?.customerDetails?.phoneNumber}</TableCell>
+                  <TableCell>{po?.quotationId?.quoteId || "-"}</TableCell>
+                  <TableCell>
+                    <Badge className="capitalize">{po?.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/purchase-orders/${po._id}`)}
+                        >
+                          View details
+                        </DropdownMenuItem>
+
+                        {po.poType === "base" && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(
+                                `/sales-purchase-orders/create?basePoId=${po?._id}`
+                              )
+                            }
+                          >
+                            Create Sales PO
+                          </DropdownMenuItem>
+                        )}
+
+                        {canAssign && (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setPoToAssign(po);
+                              setAssignOpen(true);
+                            }}
+                          >
+                            Assign PO
+                          </DropdownMenuItem>
+                        )}
+
+                        {po.poPdf?.s3Url && (
+                          <DropdownMenuItem asChild>
+                            <a href={po.poPdf.s3Url} target="_blank">
+                              View PDF
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setDeleteId(po._id)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* MOBILE CARDS */}
       <div className="md:hidden space-y-3">
-        {filteredOrders.map((po) => (
-          <Card key={po.id}>
-            <CardContent className="p-4 space-y-2">
-              <div className="flex justify-between">
-                <div className="font-semibold">{po.poNumber}</div>
-                <Badge className="capitalize">{po.status}</Badge>
-              </div>
-              <div className="text-sm">
-                Customer: {po.customerDetails.customerName}
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => router.push(`/purchase-orders/${po.id}`)}
-              >
-                View Details
-              </Button>
+        {filteredOrders.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No purchase orders found.
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          filteredOrders.map((po) => (
+            <Card key={po._id}>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex justify-between">
+                  <div className="font-semibold">{po.poNumber}</div>
+                  <Badge className="capitalize">{po.status}</Badge>
+                </div>
+                <div className="text-sm">
+                  Customer: {po.customerDetails.customerName}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/purchase-orders/${po._id}`)}
+                >
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* PAGINATION */}
@@ -351,8 +375,6 @@ export default function PurchaseOrderList() {
           Next
         </Button>
       </div>
-      {/* </CardContent>
-      </Card> */}
 
       {/* DELETE */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
@@ -362,12 +384,18 @@ export default function PurchaseOrderList() {
             <AlertDialogDescription>
               This action cannot be undone
             </AlertDialogDescription>
+            {deleteError && (
+              <div className="text-red-600 text-sm mt-2">{deleteError}</div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteError(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive"
               onClick={confirmDelete}
+              disabled={!deleteId}
             >
               Delete
             </AlertDialogAction>
@@ -380,7 +408,7 @@ export default function PurchaseOrderList() {
         <AssignPurchaseOrderDialog
           open={assignOpen}
           onOpenChange={setAssignOpen}
-          purchaseOrderId={poToAssign.id}
+          purchaseOrderId={poToAssign._id}
           onAssigned={() => fetchOrders(pagination.page)}
         />
       )}

@@ -36,7 +36,7 @@ export default function AddProductPage() {
   useEffect(() => {
     const fetchOEMs = async () => {
       try {
-        const res = await fetch("https://crm-backend-b8ys.onrender.com/api/oems/dropdown", {
+        const res = await fetch("http://localhost:8080/api/oems/dropdown", {
           credentials: "include",
         });
         const data = await res.json();

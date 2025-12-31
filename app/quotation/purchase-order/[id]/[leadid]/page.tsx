@@ -102,12 +102,12 @@ export default function CreatePurchaseOrder() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
 
-  // Fetch all products
+  // Fetch all products (show oemPrice from master data)
   useEffect(() => {
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
-        const res = await api.get("/api/products?limit=1000");
+        const res = await api.get("/api/products?limit=100");
         if (res.data?.success) {
           setProducts(res.data.data || []);
         }
@@ -126,7 +126,7 @@ export default function CreatePurchaseOrder() {
       if (!quotationIdParam) return;
       setQuoteLoading(true);
       try {
-        const response = await api.get(`https://crm-backend-b8ys.onrender.com/api/quotations/${quotationIdParam}`);
+        const response = await api.get(`/api/quotations/${quotationIdParam}`);
         const data = response.data.data;
         setQuotationData(data);
 
@@ -139,7 +139,25 @@ export default function CreatePurchaseOrder() {
               productCode: item.productCode || "",
               category: item.category || "",
               oem: item.oem || "",
-              oemPrice: item.oemPrice !== undefined ? String(item.oemPrice) : "",
+              // Always show OEM Price from master data if product in list, otherwise fallback to quote value.
+              oemPrice:
+                (() => {
+                  const masterProd = products.find(
+                    (p) =>
+                      p.productId === item.productId ||
+                      p._id === item.productId ||
+                      p.id === item.productId ||
+                      (p._id && p._id.toString() === item.productId) ||
+                      (p.id && p.id.toString() === item.productId)
+                  );
+                  if (masterProd && typeof masterProd.oemPrice === "number") {
+                    return masterProd.oemPrice.toString();
+                  }
+                  if (item.oemPrice !== undefined && item.oemPrice !== null) {
+                    return String(item.oemPrice);
+                  }
+                  return "";
+                })(),
               description: item.description || "",
               unitPrice: item.unitPrice !== undefined ? String(item.unitPrice) : "",
               quantity: item.quantity !== undefined ? String(item.quantity) : "",
@@ -166,23 +184,22 @@ export default function CreatePurchaseOrder() {
     }
     fetchQuotation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quotationIdParam]);
+  }, [quotationIdParam, products]);
 
-  // Fetch product details by ID
+  // Fetch product details by ID (show oemPrice from master data)
   const fetchProductDetails = async (productId: string, itemIdx: number) => {
     try {
       // Try to find product in the already fetched list first
       const product = products.find(
-        (p) => 
-          p.productId === productId || 
-          p._id === productId || 
+        (p) =>
+          p.productId === productId ||
+          p._id === productId ||
           p.id === productId ||
           (p._id && p._id.toString() === productId) ||
           (p.id && p.id.toString() === productId)
       );
 
       if (product) {
-        // Update the item with product details
         setItems((prevItems) =>
           prevItems.map((it, i) =>
             i === itemIdx
@@ -193,9 +210,19 @@ export default function CreatePurchaseOrder() {
                   productCode: product.productCode || "",
                   category: product.category || "",
                   oem: product.oem || "",
-                  oemPrice: product.oemPrice?.toString() || "",
+                  // Always show OEM Price from master product list in selection
+                  oemPrice:
+                    typeof product.oemPrice === "number"
+                      ? product.oemPrice.toString()
+                      : "",
                   description: product.description || product.productName || "",
-                  unitPrice: product.sellingPrice?.toString() || "",
+                  unitPrice:
+                    product.sellingPrice !== undefined && product.sellingPrice !== null
+                      ? product.sellingPrice.toString()
+                      : "",
+                  quantity: it.quantity,
+                  licenseType: it.licenseType,
+                  licenseExpiryDate: it.licenseExpiryDate,
                 }
               : it
           )
@@ -216,9 +243,19 @@ export default function CreatePurchaseOrder() {
                       productCode: fetchedProduct.productCode || "",
                       category: fetchedProduct.category || "",
                       oem: fetchedProduct.oem || "",
-                      oemPrice: fetchedProduct.oemPrice?.toString() || "",
+                      // Always show OEM Price from fetched master product
+                      oemPrice:
+                        typeof fetchedProduct.oemPrice === "number"
+                          ? fetchedProduct.oemPrice.toString()
+                          : "",
                       description: fetchedProduct.description || fetchedProduct.productName || "",
-                      unitPrice: fetchedProduct.sellingPrice?.toString() || "",
+                      unitPrice:
+                        fetchedProduct.sellingPrice !== undefined && fetchedProduct.sellingPrice !== null
+                          ? fetchedProduct.sellingPrice.toString()
+                          : "",
+                      quantity: it.quantity,
+                      licenseType: it.licenseType || "",
+                      licenseExpiryDate: it.licenseExpiryDate || "",
                     }
                   : it
               )
@@ -251,7 +288,7 @@ export default function CreatePurchaseOrder() {
   // Check if product is already selected in another item
   const isProductAlreadySelected = (productId: string, currentItemIdx: number): boolean => {
     if (!productId) return false;
-    
+
     const currentProduct = products.find(
       (p) =>
         p.productId === productId ||
@@ -260,13 +297,13 @@ export default function CreatePurchaseOrder() {
         (p._id && p._id.toString() === productId) ||
         (p.id && p.id.toString() === productId)
     );
-    
+
     return items.some((item, idx) => {
       if (idx === currentItemIdx) return false;
       if (!item.productId) return false;
-      
+
       if (item.productId === productId) return true;
-      
+
       if (currentProduct) {
         const existingProduct = products.find(
           (p) =>
@@ -276,7 +313,7 @@ export default function CreatePurchaseOrder() {
             (p._id && p._id.toString() === item.productId) ||
             (p.id && p.id.toString() === item.productId)
         );
-        
+
         if (existingProduct && currentProduct) {
           if (currentProduct.productId && existingProduct.productId) {
             return currentProduct.productId === existingProduct.productId;
@@ -287,7 +324,7 @@ export default function CreatePurchaseOrder() {
           );
         }
       }
-      
+
       return false;
     });
   };
@@ -309,15 +346,15 @@ export default function CreatePurchaseOrder() {
     );
 
     const actualProductId = selectedProduct?.productId || value;
-    
+
     // Check if this product is already selected in another item
     if (isProductAlreadySelected(actualProductId, itemIdx)) {
       toast.error("Cannot select similar product. This product has already been selected in another item.");
       return;
     }
-    
+
     handleItemChange(itemIdx, "productId", actualProductId);
-    
+
     if (value) {
       fetchProductDetails(value, itemIdx);
     }
@@ -359,6 +396,7 @@ export default function CreatePurchaseOrder() {
       productId: string;
       description: string;
       unitPrice: number;
+      oemPrice: number;
       quantity: number;
       licenseType: string;
       licenseExpiryDate?: string | null;
@@ -376,7 +414,7 @@ export default function CreatePurchaseOrder() {
     const productIds = items
       .map((item) => item.productId?.trim())
       .filter((id) => id);
-    
+
     const uniqueProductIds = new Set(productIds);
     if (productIds.length !== uniqueProductIds.size) {
       return {
@@ -385,86 +423,31 @@ export default function CreatePurchaseOrder() {
       };
     }
 
-    for (const [idx, item] of items.entries()) {
-      // productId, licenseType, description, unitPrice, quantity are required
-      if (
-        !item.productId.trim() ||
-        !item.licenseType.trim() ||
-        !item.description.trim() ||
-        !item.unitPrice.trim() ||
-        !item.quantity.trim()
-      ) {
-        if (!item.licenseType.trim()) {
-          return {
-            valid: false,
-            error: `Item validation failed: Item ${idx + 1}: License type is required`,
-          };
-        }
-        return {
-          valid: false,
-          error: `All fields except license expiry are required for Item ${idx + 1}.`
-        };
-      }
-      // License type must be allowed
-      if (!LICENSE_TYPES.includes(item.licenseType.trim())) {
-        return {
-          valid: false,
-          error: `Item ${idx + 1}: Invalid license type "${item.licenseType}".`,
-        };
-      }
-      // Validate price/quantity as numbers
-      const unitPrice = Number(item.unitPrice);
-      const quantity = Number(item.quantity);
-
-      if (isNaN(unitPrice) || unitPrice < 0) {
-        return {
-          valid: false,
-          error: `Unit price must be a non-negative number (in Item ${idx + 1}).`
-        };
-      }
-      if (isNaN(quantity) || quantity < 1) {
-        return {
-          valid: false,
-          error: `Quantity must be at least 1 (in Item ${idx + 1}).`
-        };
-      }
-
-      // For non-perpetual, licenseExpiryDate REQUIRED and must be a future date
-      if (item.licenseType !== "perpetual") {
-        if (!item.licenseExpiryDate) {
-          return {
-            valid: false,
-            error: `Item validation failed: Item ${idx + 1}: License expiry date is required for non-perpetual licenses`,
-          };
-        }
-        // Expiry date > now
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const expiryDate = new Date(item.licenseExpiryDate);
-        if (
-          isNaN(expiryDate.getTime()) ||
-          expiryDate <= today
-        ) {
-          return {
-            valid: false,
-            error: `Item validation failed: Item ${idx + 1}: License expiry date must be in the future for non-perpetual licenses`,
-          };
-        }
-      }
-    }
-
     // Prepare parsed data for backend
     const parsed = items.map(item => ({
       productId: item.productId.trim(),
       description: item.description,
       unitPrice: Number(item.unitPrice),
+      // Take oemPrice from master product if possible, fallback to item value.
+      oemPrice: (() => {
+        const prod = products.find(
+          (p) =>
+            p.productId === item.productId ||
+            p._id === item.productId ||
+            p.id === item.productId ||
+            (p._id && p._id.toString() === item.productId) ||
+            (p.id && p.id.toString() === item.productId)
+        );
+        if (prod && typeof prod.oemPrice === "number") {
+          return prod.oemPrice;
+        }
+        return Number(item.oemPrice);
+      })(),
       quantity: Number(item.quantity),
-      licenseType: item.licenseType.trim(),
-      licenseExpiryDate:
-        item.licenseType !== "perpetual" && item.licenseExpiryDate
-          ? item.licenseExpiryDate
-          : undefined,
+      licenseType: item.licenseType,
+      licenseExpiryDate: item.licenseExpiryDate || undefined,
     }));
+
     return { valid: true, parsed };
   };
 
@@ -528,7 +511,7 @@ export default function CreatePurchaseOrder() {
       }
 
       const res = await api.post(
-        "https://crm-backend-b8ys.onrender.com/api/purchase-orders",
+        "/api/purchase-orders",
         formData,
         {
           withCredentials: true,
@@ -555,8 +538,7 @@ export default function CreatePurchaseOrder() {
         toast.error("PO PDF attachment is required (filename field must be 'poPdf')");
       } else if (
         backendErr &&
-        backendErr.toLowerCase().includes('item validation failed') &&
-        backendErr.toLowerCase().includes('license type is required')
+        backendErr.toLowerCase().includes('item validation failed')
       ) {
         toast.error(backendErr);
       } else if (
@@ -634,6 +616,23 @@ export default function CreatePurchaseOrder() {
                 <div className="grid grid-cols-1 gap-6">
                   {items.map((item, idx) => {
                     const licenseType = item.licenseType;
+                    // Use oemPrice from master product if present
+                    let oemPriceToShow = item.oemPrice;
+                    const productMatched = products.find(
+                      (p) =>
+                        p.productId === item.productId ||
+                        p._id === item.productId ||
+                        p.id === item.productId ||
+                        (p._id && p._id.toString() === item.productId) ||
+                        (p.id && p.id.toString() === item.productId)
+                    );
+                    if (
+                      productMatched &&
+                      typeof productMatched.oemPrice === "number"
+                    ) {
+                      oemPriceToShow = productMatched.oemPrice.toString();
+                    }
+
                     return (
                       <div
                         className="bg-white rounded-lg shadow border border-gray-200 p-4 grid gap-3 relative"
@@ -656,8 +655,8 @@ export default function CreatePurchaseOrder() {
                           </button>
                           )}
                         </div>
-                        {/* Product Details Display */}
-                        {(item.productName || item.productCode || item.category || item.oem || item.oemPrice) && (
+                        {/* Product Details Display
+                        {(item.productName || item.productCode || item.category || item.oem || oemPriceToShow) && (
                           <div className="mb-3 p-3 bg-muted/50 rounded-md border">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                               {item.productName && (
@@ -684,17 +683,17 @@ export default function CreatePurchaseOrder() {
                                   <p className="font-semibold">{item.oem}</p>
                                 </div>
                               )}
-                              {item.oemPrice && (
+                              {/* {oemPriceToShow && (
                                 <div>
                                   <span className="text-muted-foreground font-medium">OEM Price:</span>
                                   <p className="font-semibold">
-                                    ₹{Number(item.oemPrice).toLocaleString("en-IN")}
+                                    ₹{Number(oemPriceToShow).toLocaleString("en-IN")}
                                   </p>
                                 </div>
-                              )}
-                            </div>
+                              )} */}
+                            {/* </div>
                           </div>
-                        )}
+                        // )} */} 
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="flex flex-col gap-1">
@@ -725,7 +724,7 @@ export default function CreatePurchaseOrder() {
                                     const productValue = product.productId || product._id || product.id || "";
                                     const isDisabled = items.some((item, itemIdx) => {
                                       if (itemIdx === idx || !item.productId) return false;
-                                      
+
                                       const existingProduct = products.find(
                                         (p) =>
                                           p.productId === item.productId ||
@@ -734,7 +733,7 @@ export default function CreatePurchaseOrder() {
                                           (p._id && p._id.toString() === item.productId) ||
                                           (p.id && p.id.toString() === item.productId)
                                       );
-                                      
+
                                       if (existingProduct && product) {
                                         if (existingProduct.productId && product.productId) {
                                           return existingProduct.productId === product.productId;
@@ -746,7 +745,7 @@ export default function CreatePurchaseOrder() {
                                       }
                                       return false;
                                     });
-                                    
+
                                     return (
                                       <SelectItem
                                         key={product._id || product.id || product.productId}
@@ -754,6 +753,8 @@ export default function CreatePurchaseOrder() {
                                         disabled={isDisabled}
                                       >
                                         {product.productName} ({product.productCode || product.productId})
+                                     
+                                          
                                         {isDisabled && " (Already selected)"}
                                       </SelectItem>
                                     );
@@ -802,6 +803,40 @@ export default function CreatePurchaseOrder() {
                               required
                             />
                           </div>
+                          {/* OEM Price input; shown as read-only from master list if exists */}
+                          <div className="flex flex-col gap-1">
+                            <label
+                              className="font-semibold text-sm mb-1 block"
+                              htmlFor={`oemPrice-${idx}`}
+                            >
+                              OEM Price
+                            </label>
+                            <Input
+                              id={`oemPrice-${idx}`}
+                              placeholder="OEM Price"
+                              value={oemPriceToShow}
+                              onChange={(e) =>
+                                handleItemChange(idx, "oemPrice", e.target.value)
+                              }
+                              // If oemPrice is from master, make it readOnly for user!
+                              readOnly={Boolean(
+                                productMatched &&
+                                typeof productMatched.oemPrice === "number"
+                              )}
+                              type="number"
+                              name={`items.${idx}.oemPrice`}
+                              min="0"
+                              required
+                            />
+                            {/* {productMatched &&
+                              typeof productMatched.oemPrice === "number" && (
+                                <span className="text-xs text-muted-foreground">
+                                  (Fetched from master product)
+                                </span>
+                              )} */}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="flex flex-col gap-1">
                             <label
                               className="font-semibold text-sm mb-1 block"
@@ -822,8 +857,6 @@ export default function CreatePurchaseOrder() {
                               required
                             />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
                             <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseType-${idx}`}>License Type</label>
                             <select
@@ -834,7 +867,6 @@ export default function CreatePurchaseOrder() {
                                 handleItemChange(idx, "licenseType", e.target.value)
                               }
                               className="p-2 border rounded w-full"
-                              required
                             >
                               <option value="">Select License Type</option>
                               {LICENSE_TYPES.map(type => (
@@ -842,6 +874,8 @@ export default function CreatePurchaseOrder() {
                               ))}
                             </select>
                           </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
                             <label className="font-semibold text-sm mb-1 block" htmlFor={`licenseExpiryDate-${idx}`}>License Expiry Date</label>
                             <Input
@@ -854,7 +888,7 @@ export default function CreatePurchaseOrder() {
                               }
                               name={`items.${idx}.licenseExpiryDate`}
                               disabled={item.licenseType === "perpetual"}
-                              required={item.licenseType !== "perpetual"}
+                              required={false}
                             />
                           </div>
                         </div>
@@ -899,7 +933,13 @@ export default function CreatePurchaseOrder() {
                     value={form.poDate}
                     type="date"
                     id="poDate"
+                    min={quotationData?.dateOfQuote ? quotationData.dateOfQuote.split('T')[0] : undefined}
                   />
+                  {form.poDate && quotationData?.dateOfQuote && form.poDate < quotationData.dateOfQuote.split('T')[0] && (
+                    <span className="text-xs text-red-500 mt-1">
+                      PO Date cannot be earlier than Quotation Date ({quotationData.dateOfQuote.split('T')[0]}).
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -951,7 +991,6 @@ export default function CreatePurchaseOrder() {
                   onClick={submitPurchaseOrder}
                   disabled={loading}
                   className=" "
-                 
                 >
                   {loading ? "Creating..." : "Create"}
                 </Button>

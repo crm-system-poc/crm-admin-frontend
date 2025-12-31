@@ -214,13 +214,13 @@ export default function Home() {
           <div className="bg-white p-4 rounded-xl shadow">
             <p className="text-xs text-gray-500">Total Revenue</p>
             <p className="text-2xl font-bold text-green-600">
-              ₹{stats?.purchaseOrders?.financials?.totalAmountSum?.toLocaleString()}
+              ₹{stats?.purchaseOrders?.financials?.totalProfit?.toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* ----------------------------- KPIs ------------------------------ */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <KpiCard
             title="Total Leads"
             value={stats?.leads?.totalLeads}
@@ -233,12 +233,22 @@ export default function Home() {
           />
           <KpiCard
             title="Purchase Orders"
-            value={stats?.purchaseOrders?.totalPOs || 0}
+            value={stats?.purchaseOrders?.totalPOs?.base || 0}
+            icon={<ShoppingBag />}
+          />
+          <KpiCard
+            title="Sales Orders"
+            value={stats?.purchaseOrders?.totalPOs?.sales || 0}
             icon={<ShoppingBag />}
           />
           <KpiCard
             title="PO Value"
-            value={`₹${stats?.purchaseOrders?.financials?.totalAmountSum?.toLocaleString() || 0}`}
+            value={`₹${
+              (
+                (stats?.purchaseOrders?.financials?.baseAmountSum || 0) +
+                (stats?.purchaseOrders?.financials?.salesAmountSum || 0)
+              ).toLocaleString()
+            }`}
             icon={<IndianRupee />}
           />
         </div>
